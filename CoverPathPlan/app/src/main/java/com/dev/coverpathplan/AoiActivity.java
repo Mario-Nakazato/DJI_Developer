@@ -3,6 +3,7 @@ package com.dev.coverpathplan;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -43,6 +44,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
 
         Button b1 = findViewById(R.id.b1);
+        Button b2 = findViewById(R.id.b2);
+        Button b3 = findViewById(R.id.b3);
 
         b1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -56,8 +59,6 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 }
             }
         });
-
-        Button b2 = findViewById(R.id.b2);
 
         b2.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -73,6 +74,14 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                         grid.addCellsMarker(cell);
                     }
                 }
+            }
+        });
+
+        b3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(AoiActivity.this, GsdActivity.class);
+                startActivity(intent);
             }
         });
 
