@@ -28,6 +28,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private Marker markerSelected;
     private AreaOfInterest aoi;
     private OrientedBoundingBox obb;
+    private Grid grid;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +51,27 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                     return;
                 if (aoi.removeMarker(markerSelected)) {
                     obb.createOrientedBoundingBox(aoi.getVertex());
+                    grid.removeAllCells();
                     markerSelected = null;
+                }
+            }
+        });
+
+        Button b2 = findViewById(R.id.b2);
+
+        b2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                grid.removeAllCells();
+                if (aoi.isPolygon()) {
+                    grid.createGrid(obb.getPlg().getPoints());
+                    grid.setCells(obb.contains(grid.getCells()));
+                    for (LatLng latLng : grid.getCells()) {
+                        Marker cell = mMap.addMarker(new MarkerOptions().position(latLng)
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+                        cell.setTitle(cell.getId());
+                        grid.addCellsMarker(cell);
+                    }
                 }
             }
         });
@@ -58,6 +79,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         // Iniciarlizar
         aoi = new AreaOfInterest();
         obb = new OrientedBoundingBox();
+        grid = new Grid();
     }
 
     /**
@@ -73,7 +95,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        //Marcador do vant
+        // Marcador do vant
         LatLng latlng = new LatLng(-23.1858535, -50.6574255);
         vant = mMap.addMarker(new MarkerOptions().position(latlng).title("VANT")
                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.aircraft)).flat(true).anchor(0.5f, 0.5f));
@@ -102,6 +124,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                     aoi.addVertex(marker);
 
                 obb.createOrientedBoundingBox(aoi.getVertex());
+                grid.removeAllCells();
             }
         });
 
@@ -127,8 +150,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void onMarkerDragEnd(@NonNull Marker marker) {
                 Log.v("Debug", "Drag end " + String.valueOf(marker.getPosition()));
-                if (aoi.setMarker(marker) != null)
+                if (aoi.setMarker(marker) != null) {
                     obb.createOrientedBoundingBox(aoi.getVertex());
+                    grid.removeAllCells();
+                }
             }
 
             @Override
