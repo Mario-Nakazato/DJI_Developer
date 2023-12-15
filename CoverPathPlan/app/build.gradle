@@ -83,6 +83,8 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
     implementation 'com.google.android.gms:play-services-maps:18.2.0'
+    implementation 'org.locationtech.jts:jts-core:1.19.0'
+    implementation 'com.github.grumlimited:geocalc:0.6'
 
     implementation('com.dji:dji-sdk:4.17', {
         /**
