@@ -10,6 +10,11 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 
+import org.locationtech.jts.algorithm.MinimumDiameter;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LinearRing;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +25,9 @@ public class AreaOfInterest {
     private List<Marker> vertexMarker;
     private PolygonOptions plgOp;
     private Polygon plg;
+    private AreaOfInterest obb;
+    private List<Coordinate> vertexjts;
+    private static final GeometryFactory geometryFactory = new GeometryFactory();
 
     AreaOfInterest(GoogleMap googleMap) {
         map = googleMap;
@@ -92,5 +100,45 @@ public class AreaOfInterest {
 
     boolean isPolygon() {
         return getVertex().size() >= 3;
+    }
+
+    void orientedBoundingBox() {
+        if (obb == null) {
+            obb = new AreaOfInterest(map);
+            obb.getMarkerOp().icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+        }
+        if (isPolygon()) {
+            vertexjts = new ArrayList<>();
+            for (LatLng apex : vertex) {
+                vertexjts.add(new Coordinate(apex.longitude, apex.latitude));
+            }
+            // Garanta que a lista de coordenadas seja fechada
+            if (!vertexjts.get(0).equals(vertexjts.get(vertexjts.size() - 1))) {
+                vertexjts.add(vertexjts.get(0));
+            }
+
+            // Criar um anel linear com as coordenadas
+            Coordinate[] coordArray = vertexjts.toArray(new Coordinate[vertexjts.size()]);
+            LinearRing linearRing = geometryFactory.createLinearRing(coordArray);
+
+            // Criar um polígono com o anel linear
+            org.locationtech.jts.geom.Polygon plgjts = geometryFactory.createPolygon(linearRing, null);
+
+            // Calcular o diâmetro mínimo
+            MinimumDiameter minimumDiameter = new MinimumDiameter(plgjts);
+            Coordinate[] diametroMinimo = minimumDiameter.getMinimumRectangle().getCoordinates();
+
+            List<LatLng> vertexobb = new ArrayList<>();
+            for (Coordinate coordinate : diametroMinimo) {
+                LatLng point = new LatLng(coordinate.y, coordinate.x);
+                vertexobb.add(point);
+            }
+            obb.setVertexPolygon(vertexobb);
+        }
+        if (obb.isPolygon()) {
+            obb.getPlg().setStrokeColor(Color.BLUE);
+            obb.getPlg().setStrokeWidth(14);
+            obb.getPlg().setZIndex(-1);
+        }
     }
 }

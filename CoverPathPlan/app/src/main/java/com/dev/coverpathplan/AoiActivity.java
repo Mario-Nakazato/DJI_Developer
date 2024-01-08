@@ -54,6 +54,7 @@ public class AoiActivity extends FragmentActivity implements OnMapReadyCallback 
             @Override
             public void onMapClick(LatLng latLng) {
                 aoi.addVertexPolygon(latLng);
+                aoi.orientedBoundingBox();
             }
         });
     }
