@@ -1,36 +1,44 @@
 package com.dev.coverpathplan;
 
-import androidx.fragment.app.FragmentActivity;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.util.Log;
 
+import com.dev.coverpathplan.databinding.ActivityAoiBinding;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.dev.coverpathplan.databinding.ActivityMapsBinding;
+import com.google.android.gms.maps.model.PolygonOptions;
 
-public class AoiActivity extends FragmentActivity implements OnMapReadyCallback {
+public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
-    private ActivityMapsBinding binding;
+    private ActivityAoiBinding binding;
+    private Marker vant;
     private AreaOfInterest aoi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        binding = ActivityMapsBinding.inflate(getLayoutInflater());
+        binding = ActivityAoiBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        // Iniciarlizar
+        aoi = new AreaOfInterest();
     }
 
     @SuppressLint("MissingPermission")
@@ -38,22 +46,48 @@ public class AoiActivity extends FragmentActivity implements OnMapReadyCallback 
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap; // Prefixo 'm' significa membro da classe
 
-        LatLng vant = new LatLng(-23.1858535, -50.6574255);
-        mMap.addMarker(new MarkerOptions().position(vant).title("VANT")
+        LatLng latlng = new LatLng(-23.1858535, -50.6574255);
+        vant = mMap.addMarker(new MarkerOptions().position(latlng).title("VANT")
                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.aircraft)).flat(true).anchor(0.5f, 0.5f));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(vant));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(vant, 19.0f));
+        vant.setTag("vant");
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, 19.0f));
+
         mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
         mMap.setMyLocationEnabled(true);
-
         mMap.getUiSettings().setMapToolbarEnabled(false);
-
-        aoi = new AreaOfInterest(mMap);
 
         googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
-            public void onMapClick(LatLng latLng) {
-                aoi.addVertexPolygon(latLng);
+            public void onMapClick(LatLng latlng) {
+                Marker marker = mMap.addMarker(new MarkerOptions().position(latlng)
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)).draggable(true));
+                marker.setTitle("V " + marker.getId());
+                marker.setTag("vértice");
+
+                if (aoi.getPlg() == null)
+                    aoi.setPlg(mMap.addPolygon(new PolygonOptions().add(latlng).geodesic(true)), marker);
+                else
+                    aoi.addVertex(marker);
+            }
+        });
+
+        googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+            @Override
+            public void onMarkerDrag(@NonNull Marker marker) {
+                Log.v("Debug", "Drag " + String.valueOf(marker.getPosition()));
+            }
+
+            @Override
+            public void onMarkerDragEnd(@NonNull Marker marker) {
+                Log.v("Debug", "Drag end " + String.valueOf(marker.getPosition()));
+                aoi.setMarker(marker);
+            }
+
+            @Override
+            public void onMarkerDragStart(@NonNull Marker marker) {
+                Log.v("Debug", "Drag start " + String.valueOf(marker.getPosition()));
             }
         });
     }
