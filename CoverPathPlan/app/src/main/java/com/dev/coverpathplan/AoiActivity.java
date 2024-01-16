@@ -6,6 +6,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import com.dev.coverpathplan.databinding.ActivityAoiBinding;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -22,7 +24,9 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     private ActivityAoiBinding binding;
+    private Button bExcluir;
     private Marker vant;
+    private Marker markerSelected;
     private AreaOfInterest aoi;
 
     @Override
@@ -36,6 +40,18 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        bExcluir = findViewById(R.id.excluir);
+
+        bExcluir.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (markerSelected == null)
+                    return;
+                aoi.removeMarker(markerSelected);
+                markerSelected = null;
+            }
+        });
 
         // Iniciarlizar
         aoi = new AreaOfInterest();
@@ -88,6 +104,19 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void onMarkerDragStart(@NonNull Marker marker) {
                 Log.v("Debug", "Drag start " + String.valueOf(marker.getPosition()));
+            }
+        });
+
+        googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(@NonNull Marker marker) {
+                Log.v("Debug", "Click " + String.valueOf(marker.getPosition()));
+                if (!marker.equals(markerSelected))
+                    markerSelected = marker;
+                else {
+                    markerSelected = null;
+                }
+                return false;
             }
         });
     }

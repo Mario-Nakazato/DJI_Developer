@@ -42,8 +42,31 @@ public class AreaOfInterest {
             plg.setStrokeColor(Color.GREEN);
     }
 
+    List<LatLng> getVertex() {
+        return vertex;
+    }
+
+    List<Marker> getMarker() {
+        return vertexMarker;
+    }
+
     boolean isPolygon() {
         return vertex.size() >= 3;
+    }
+
+    boolean removeMarker(Marker marker) {
+        if (!vertexMarker.contains(marker))
+            return false;
+
+        vertex.remove(marker.getPosition());
+        vertexMarker.remove(marker);
+        marker.remove();
+
+        plg.setPoints(vertex);
+
+        if (!isPolygon())
+            plg.setStrokeColor(Color.BLACK);
+        return true;
     }
 
     Marker setMarker(Marker marker){
