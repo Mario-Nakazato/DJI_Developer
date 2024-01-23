@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -28,6 +29,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private Marker vant;
     private Marker markerSelected;
     private AreaOfInterest aoi;
+    private OrientedBoundingBox obb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,13 +50,16 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             public void onClick(View view) {
                 if (markerSelected == null)
                     return;
-                aoi.removeMarker(markerSelected);
-                markerSelected = null;
+                if (aoi.removeMarker(markerSelected)) {
+                    obb.createOrientedBoundingBox(aoi.getVertex());
+                    markerSelected = null;
+                }
             }
         });
 
         // Iniciarlizar
         aoi = new AreaOfInterest();
+        obb = new OrientedBoundingBox();
     }
 
     @SuppressLint("MissingPermission")
@@ -82,10 +87,14 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 marker.setTitle("V " + marker.getId());
                 marker.setTag("vértice");
 
-                if (aoi.getPlg() == null)
+                if (aoi.getPlg() == null) {
                     aoi.setPlg(mMap.addPolygon(new PolygonOptions().add(latlng).geodesic(true)), marker);
-                else
+                    // Caixa delimitadora orientada
+                    obb.setPlg(mMap.addPolygon(new PolygonOptions().add(latlng).geodesic(true).strokeColor(Color.BLUE).strokeWidth(14).zIndex(-1)));
+                } else
                     aoi.addVertex(marker);
+
+                obb.createOrientedBoundingBox(aoi.getVertex());
             }
         });
 
@@ -98,7 +107,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void onMarkerDragEnd(@NonNull Marker marker) {
                 Log.v("Debug", "Drag end " + String.valueOf(marker.getPosition()));
-                aoi.setMarker(marker);
+                if (aoi.setMarker(marker) != null)
+                    obb.createOrientedBoundingBox(aoi.getVertex());
             }
 
             @Override
@@ -113,9 +123,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 Log.v("Debug", "Click " + String.valueOf(marker.getPosition()));
                 if (!marker.equals(markerSelected))
                     markerSelected = marker;
-                else {
+                else
                     markerSelected = null;
-                }
                 return false;
             }
         });
