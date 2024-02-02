@@ -29,6 +29,13 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Excluir" />
+
+        <Button
+            android:id="@+id/grade"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Grade" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

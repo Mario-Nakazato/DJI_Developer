@@ -13,12 +13,18 @@ import java.util.List;
 
 public class OrientedBoundingBox {
     private List<Coordinate> coordinate;
+    private org.locationtech.jts.geom.Polygon plg;
     private Polygon obb;
-    private static final GeometryFactory geometryFactory = new GeometryFactory();
-    OrientedBoundingBox() {}
+    public static final GeometryFactory geometryFactory = new GeometryFactory();
+    OrientedBoundingBox() {
+        coordinate = new ArrayList<>();
+    }
 
     Polygon getPlg() {
         return obb;
+    }
+    org.locationtech.jts.geom.Polygon getPlgjts() {
+        return plg;
     }
 
     void setPlg(Polygon polygon) {
@@ -30,7 +36,8 @@ public class OrientedBoundingBox {
     }
 
     void createOrientedBoundingBox(List<LatLng> vertex) {
-        coordinate = new ArrayList<>();
+        obb.setPoints(vertex);
+        coordinate.clear();
         for (LatLng apex : vertex) {
             coordinate.add(new Coordinate(apex.longitude, apex.latitude));
         }
@@ -46,10 +53,10 @@ public class OrientedBoundingBox {
             LinearRing linearRing = geometryFactory.createLinearRing(coordArray);
 
             // Criar um polígono com o anel linear
-            org.locationtech.jts.geom.Polygon plgjts = geometryFactory.createPolygon(linearRing, null);
+            plg = geometryFactory.createPolygon(linearRing, null);
 
             // Calcular o diâmetro mínimo
-            MinimumDiameter minimumDiameter = new MinimumDiameter(plgjts);
+            MinimumDiameter minimumDiameter = new MinimumDiameter(plg);
             Coordinate[] diametroMinimo = minimumDiameter.getMinimumRectangle().getCoordinates();
 
             List<LatLng> vertexobb = new ArrayList<>();
@@ -58,7 +65,6 @@ public class OrientedBoundingBox {
                 vertexobb.add(point);
             }
             obb.setPoints(vertexobb);
-        } else
-            obb.setPoints(vertex);
+        }
     }
 }
