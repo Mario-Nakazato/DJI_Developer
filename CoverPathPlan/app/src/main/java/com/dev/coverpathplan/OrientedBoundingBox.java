@@ -67,4 +67,17 @@ public class OrientedBoundingBox {
             obb.setPoints(vertexobb);
         }
     }
+
+    List<LatLng> pointsInsidePolygons(List<LatLng> cells) {
+        List<LatLng> newCells = new ArrayList<>();
+        for (LatLng cell : cells) {
+            Coordinate pontoDentro = new Coordinate(cell.longitude, cell.latitude);
+            org.locationtech.jts.geom.Point ponto = geometryFactory.createPoint(pontoDentro);
+            // Verificando se o ponto está dentro do polígono
+            if (plg.contains(ponto)) {
+                newCells.add(cell);
+            }
+        }
+        return newCells;
+    }
 }

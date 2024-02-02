@@ -68,6 +68,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 grid.removeAllCells();
                 if (aoi.isPolygon()) {
                     grid.createGrid(obb.getPlg().getPoints());
+                    grid.setCells(obb.pointsInsidePolygons(grid.getCells()));
                     for (LatLng latLng : grid.getCells()) {
                         Marker cell = mMap.addMarker(new MarkerOptions().position(latLng)
                                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
