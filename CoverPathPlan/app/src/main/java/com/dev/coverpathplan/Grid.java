@@ -65,52 +65,52 @@ public class Grid {
         bear = EarthCalc.vincenty.bearing(c1, c2);
         distance = EarthCalc.vincenty.distance(c1, c2);
 
-        double dis = distance - (2 * distance / Math.ceil(distance / 21.41) / pos);
-        double d = distance / Math.ceil(distance / 21.41) / pos; // Posição do primeiro ponto
-        int j = (int) Math.ceil(dis / 21.41 * overlap); // Quantidade de divisão "internas" depois do d
+        double dis = distance - (2 * distance / Math.ceil(distance / CaptureArea.getFootprintLargura()) / pos);
+        double d = distance / Math.ceil(distance / CaptureArea.getFootprintLargura()) / pos; // Posição do primeiro ponto
+        int j = (int) Math.ceil(dis / CaptureArea.getFootprintLargura() * overlap); // Quantidade de divisão "internas" depois do d
 
         for (int i = 0; i <= j; i++) {
             coor = EarthCalc.gcd.pointAt(c1, bear, d);
             cells.add(new LatLng(coor.latitude, coor.longitude));
-            d += dis / Math.ceil(dis / 21.41 * overlap);
+            d += dis / Math.ceil(dis / CaptureArea.getFootprintLargura() * overlap);
         }
 
         // lateral
         bear = EarthCalc.vincenty.bearing(c1, c4);
         distance = EarthCalc.vincenty.distance(c1, c4);
 
-        dis = distance - (2 * distance / Math.ceil(distance / 15.79) / pos);
-        d = distance / Math.ceil(distance / 15.79) / pos; // Posição do primeiro ponto
-        j = (int) Math.ceil(dis / 15.79 * overlap); // Quantidade de divisão "internas" depois do d
+        dis = distance - (2 * distance / Math.ceil(distance / CaptureArea.getFootprintAltura()) / pos);
+        d = distance / Math.ceil(distance / CaptureArea.getFootprintAltura()) / pos; // Posição do primeiro ponto
+        j = (int) Math.ceil(dis / CaptureArea.getFootprintAltura() * overlap); // Quantidade de divisão "internas" depois do d
 
         for (int i = 0; i <= j; i++) {
             coor = EarthCalc.gcd.pointAt(c1, bear, d);
             cells.add(new LatLng(coor.latitude, coor.longitude));
-            d += dis / Math.ceil(dis / 15.79 * overlap);
+            d += dis / Math.ceil(dis / CaptureArea.getFootprintAltura() * overlap);
         }*/
 
         // codigo
         double bear1 = EarthCalc.vincenty.bearing(c1, c2);
         double distance1 = EarthCalc.vincenty.distance(c1, c2);
 
-        double dis1 = distance1 - (2 * distance1 / Math.ceil(distance1 / 21.41) / pos);
-        double d1 = distance1 / Math.ceil(distance1 / 21.41) / pos; // Posição do primeiro ponto
-        int j1 = (int) Math.ceil(dis1 / 21.41 * overlap); // Quantidade de divisão "internas" depois do d
+        double dis1 = distance1 - (2 * distance1 / Math.ceil(distance1 / CaptureArea.getFootprintLargura()) / pos);
+        double d1 = distance1 / Math.ceil(distance1 / CaptureArea.getFootprintLargura()) / pos; // Posição do primeiro ponto
+        int j1 = (int) Math.ceil(dis1 / CaptureArea.getFootprintLargura() * overlap); // Quantidade de divisão "internas" depois do d
 
         double bear2 = EarthCalc.vincenty.bearing(c1, c4);
         double distance2 = EarthCalc.vincenty.distance(c1, c4);
 
-        double dis2 = distance2 - (2 * distance2 / Math.ceil(distance2 / 15.79) / pos);
-        int j2 = (int) Math.ceil(dis2 / 15.79 * overlap); // Quantidade de divisão "internas" depois do d
+        double dis2 = distance2 - (2 * distance2 / Math.ceil(distance2 / CaptureArea.getFootprintAltura()) / pos);
+        int j2 = (int) Math.ceil(dis2 / CaptureArea.getFootprintAltura() * overlap); // Quantidade de divisão "internas" depois do d
         for (int i1 = 0; i1 <= j1; i1++) {
             Point coor0 = EarthCalc.gcd.pointAt(c1, bear1, d1);
-            double d2 = distance2 / Math.ceil(distance2 / 15.79) / pos; // Posição do primeiro ponto
+            double d2 = distance2 / Math.ceil(distance2 / CaptureArea.getFootprintAltura()) / pos; // Posição do primeiro ponto
             for (int i2 = 0; i2 <= j2; i2++) {
                 coor = EarthCalc.gcd.pointAt(coor0, bear2, d2);
                 cells.add(new LatLng(coor.latitude, coor.longitude));
-                d2 += dis2 / Math.ceil(dis2 / 15.79 * overlap);
+                d2 += dis2 / Math.ceil(dis2 / CaptureArea.getFootprintAltura() * overlap);
             }
-            d1 += dis1 / Math.ceil(dis1 / 21.41 * overlap);
+            d1 += dis1 / Math.ceil(dis1 / CaptureArea.getFootprintLargura() * overlap);
         }
     }
 }

@@ -30,6 +30,10 @@
             android:name=".AoiActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".GsdActivity"
+            android:exported="false" />
+
         <uses-library
             android:name="org.apache.http.legacy"
             android:required="false" />

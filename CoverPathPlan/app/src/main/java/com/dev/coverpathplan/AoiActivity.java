@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,6 +28,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private ActivityAoiBinding binding;
     private Button bExcluir;
     private Button bGrade;
+    private Button bGsd;
     private Marker vant;
     private Marker markerSelected;
     private AreaOfInterest aoi;
@@ -76,6 +78,16 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                         grid.addCellsMarker(cell);
                     }
                 }
+            }
+        });
+
+        bGsd = findViewById(R.id.gsd);
+
+        bGsd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(AoiActivity.this, GsdActivity.class);
+                startActivity(intent);
             }
         });
 
