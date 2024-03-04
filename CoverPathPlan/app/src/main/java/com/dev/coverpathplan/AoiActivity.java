@@ -18,7 +18,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.PolygonOptions;
 
 public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -48,13 +47,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             public void onClick(View view) {
                 if (markerSelected == null)
                     return;
-                aoi.removeMarker(markerSelected);
+                aoi.deleteVertex(markerSelected);
                 markerSelected = null;
             }
         });
-
-        // Iniciarlizar
-        aoi = new AreaOfInterest();
     }
 
     @SuppressLint("MissingPermission")
@@ -74,18 +70,13 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setMapToolbarEnabled(false);
 
+        // Iniciarlizar
+        aoi = new AreaOfInterest(mMap);
+
         googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latlng) {
-                Marker marker = mMap.addMarker(new MarkerOptions().position(latlng)
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)).draggable(true));
-                marker.setTitle("V " + marker.getId());
-                marker.setTag("vértice");
-
-                if (aoi.getPlg() == null)
-                    aoi.setPlg(mMap.addPolygon(new PolygonOptions().add(latlng).geodesic(true)), marker);
-                else
-                    aoi.addVertex(marker);
+                aoi.addVertex(latlng);
             }
         });
 
@@ -98,7 +89,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void onMarkerDragEnd(@NonNull Marker marker) {
                 Log.v("Debug", "Drag end " + String.valueOf(marker.getPosition()));
-                aoi.setMarker(marker);
+                aoi.modifyVertex(marker);
             }
 
             @Override
