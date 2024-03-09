@@ -2,81 +2,95 @@ package com.dev.coverpathplan;
 
 import android.graphics.Color;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
+import com.google.android.gms.maps.model.PolygonOptions;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AreaOfInterest {
-    private List<LatLng> vertex;
-    private List<Marker> vertexMarker;
-    private Polygon plg;
-    /* Inicializar construtor com poligono?
-     * Se sim, dica deve ser semelhante ao metodo setPlg
-     * */
-    AreaOfInterest() {
-        vertex = new ArrayList<>();
-        vertexMarker = new ArrayList<>();
-    }
+    private GoogleMap googleMap;
+    private List<LatLng> aoiVertex;
+    private List<Marker> aoiVertexMarker;
+    private Polygon aoi;
 
-    Polygon getPlg() {
-        return plg;
-    }
-
-    /* Razão para dois parametros se deve ao fato de como o poligono é instanciado pelo Google Maps
-     * e o marcador para associar ao vértice.
-     * */
-    void setPlg(Polygon polygon, Marker marker) {
-        plg = polygon;
-        addVertex(marker);
-    }
-
-    void addVertex(Marker marker) {
-        vertex.add(marker.getPosition());
-        vertexMarker.add(marker);
-        plg.setPoints(vertex);
-
-        if (isPolygon())
-            plg.setStrokeColor(Color.GREEN);
-    }
-
-    List<LatLng> getVertex() {
-        return vertex;
-    }
-
-    List<Marker> getMarker() {
-        return vertexMarker;
+    AreaOfInterest(GoogleMap googleMap) {
+        this.googleMap = googleMap;
+        aoiVertex = new ArrayList<>();
+        aoiVertexMarker = new ArrayList<>();
     }
 
     boolean isPolygon() {
-        return vertex.size() >= 3;
+        return aoiVertex.size() >= 3;
     }
 
-    boolean removeMarker(Marker marker) {
-        if (!vertexMarker.contains(marker))
+    private boolean addVertexMarker(LatLng vertex) {
+        Marker marker = googleMap.addMarker(new MarkerOptions().position(vertex).draggable(true)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+        marker.setTitle("V " + marker.getId());
+        marker.setTag("vértice");
+        aoiVertexMarker.add(marker);
+        return false;
+    }
+
+    boolean addVertex(LatLng vertex) {
+        try {
+            aoiVertex.add(vertex);
+            addVertexMarker(vertex);
+
+            if (aoi == null)
+                aoi = googleMap.addPolygon(new PolygonOptions().addAll(aoiVertex).geodesic(true));
+            else
+                aoi.setPoints(aoiVertex);
+
+            if (isPolygon())
+                aoi.setStrokeColor(Color.GREEN);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    boolean modifyVertex(Marker vertexMarker) {
+        int i = aoiVertexMarker.indexOf(vertexMarker);
+
+        if (i == -1)
             return false;
 
-        vertex.remove(marker.getPosition());
-        vertexMarker.remove(marker);
-        marker.remove();
-
-        plg.setPoints(vertex);
-
-        if (!isPolygon())
-            plg.setStrokeColor(Color.BLACK);
-        return true;
+        try {
+            aoiVertex.set(i, vertexMarker.getPosition());
+            aoiVertexMarker.set(i, vertexMarker);
+            aoi.setPoints(aoiVertex);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
-    Marker setMarker(Marker marker){
-        if (!vertexMarker.contains(marker))
-            return null;
+    boolean deleteVertex(Marker vertexMarker) {
+        int i = aoiVertexMarker.indexOf(vertexMarker);
 
-        vertex.set(vertexMarker.indexOf(marker), marker.getPosition());
-        Marker setMarker = vertexMarker.set(vertexMarker.indexOf(marker), marker);
+        if (i == -1)
+            return false;
 
-        plg.setPoints(vertex);
-        return setMarker;
+        try {
+            aoiVertex.remove(i);
+            aoiVertexMarker.remove(i).remove();
+            aoi.setPoints(aoiVertex);
+
+            if (!isPolygon())
+                aoi.setStrokeColor(Color.BLACK);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
