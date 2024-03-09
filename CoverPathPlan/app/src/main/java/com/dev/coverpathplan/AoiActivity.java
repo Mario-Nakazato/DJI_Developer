@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -20,7 +19,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.PolygonOptions;
 
 public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -32,7 +30,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private Marker vant;
     private Marker markerSelected;
     private AreaOfInterest aoi;
-    private OrientedBoundingBox obb;
+    private JTSGeometryUtils obb;
     private Grid grid;
 
     @Override
@@ -54,11 +52,11 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             public void onClick(View view) {
                 if (markerSelected == null)
                     return;
-                if (aoi.removeMarker(markerSelected)) {
-                    obb.createOrientedBoundingBox(aoi.getVertex());
-                    grid.removeAllCells();
-                    markerSelected = null;
+                if (aoi.deleteVertex(markerSelected)) {
+                    aoi.setObb(obb.calculateOrientedBoundingBox(aoi.getAoiVertex()));
+                    //grid.removeAllCells();
                 }
+                markerSelected = null;
             }
         });
 
@@ -69,8 +67,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             public void onClick(View view) {
                 grid.removeAllCells();
                 if (aoi.isPolygon()) {
-                    grid.createGrid(obb.getPlg().getPoints());
-                    grid.setCells(obb.pointsInsidePolygons(grid.getCells()));
+                    //grid.createGrid(obb.getPlg().getPoints());
+                    //grid.setCells(obb.pointsInsidePolygons(grid.getCells()));
                     for (LatLng latLng : grid.getCells()) {
                         Marker cell = mMap.addMarker(new MarkerOptions().position(latLng)
                                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
@@ -91,9 +89,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             }
         });
 
-        // Iniciarlizar
-        aoi = new AreaOfInterest();
-        obb = new OrientedBoundingBox();
+        // Inicializar
+        obb = new JTSGeometryUtils();
         grid = new Grid();
     }
 
@@ -114,23 +111,16 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setMapToolbarEnabled(false);
 
+        // Inicializar
+        aoi = new AreaOfInterest(mMap);
+
         googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latlng) {
-                Marker marker = mMap.addMarker(new MarkerOptions().position(latlng)
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)).draggable(true));
-                marker.setTitle("V " + marker.getId());
-                marker.setTag("vértice");
-
-                if (aoi.getPlg() == null) {
-                    aoi.setPlg(mMap.addPolygon(new PolygonOptions().add(latlng).geodesic(true)), marker);
-                    // Caixa delimitadora orientada
-                    obb.setPlg(mMap.addPolygon(new PolygonOptions().add(latlng).geodesic(true).strokeColor(Color.BLUE).strokeWidth(14).zIndex(-1)));
-                } else
-                    aoi.addVertex(marker);
-
-                obb.createOrientedBoundingBox(aoi.getVertex());
-                grid.removeAllCells();
+                if (aoi.addVertex(latlng)) {
+                    aoi.setObb(obb.calculateOrientedBoundingBox(aoi.getAoiVertex()));
+                    //grid.removeAllCells();
+                }
             }
         });
 
@@ -143,9 +133,9 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void onMarkerDragEnd(@NonNull Marker marker) {
                 Log.v("Debug", "Drag end " + String.valueOf(marker.getPosition()));
-                if (aoi.setMarker(marker) != null) {
-                    obb.createOrientedBoundingBox(aoi.getVertex());
-                    grid.removeAllCells();
+                if (aoi.modifyVertex(marker)) {
+                    aoi.setObb(obb.calculateOrientedBoundingBox(aoi.getAoiVertex()));
+                    //grid.removeAllCells();
                 }
             }
 
@@ -161,9 +151,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 Log.v("Debug", "Click " + String.valueOf(marker.getPosition()));
                 if (!marker.equals(markerSelected))
                     markerSelected = marker;
-                else {
+                else
                     markerSelected = null;
-                }
                 return false;
             }
         });
