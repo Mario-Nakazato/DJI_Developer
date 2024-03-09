@@ -18,6 +18,7 @@ public class AreaOfInterest {
     private List<LatLng> aoiVertex;
     private List<Marker> aoiVertexMarker;
     private Polygon aoi;
+    private Polygon obb;
 
     AreaOfInterest(GoogleMap googleMap) {
         this.googleMap = googleMap;
@@ -87,6 +88,23 @@ public class AreaOfInterest {
 
             if (!isPolygon())
                 aoi.setStrokeColor(Color.BLACK);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    List<LatLng> getAoiVertex() {
+        return aoiVertex;
+    }
+
+    boolean setObb(List<LatLng> vertex) {
+        try {
+            if (obb == null)
+                obb = googleMap.addPolygon(new PolygonOptions().addAll(vertex).geodesic(true).strokeColor(Color.BLUE).strokeWidth(14).zIndex(-1));
+            else
+                obb.setPoints(vertex);
             return true;
         } catch (Exception e) {
             e.printStackTrace();

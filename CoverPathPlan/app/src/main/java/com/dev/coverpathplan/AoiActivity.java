@@ -27,7 +27,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private Marker vant;
     private Marker markerSelected;
     private AreaOfInterest aoi;
-    private OrientedBoundingBox obb;
+    private JTSGeometryUtils obb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,10 +48,14 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             public void onClick(View view) {
                 if (markerSelected == null)
                     return;
-                aoi.deleteVertex(markerSelected);
+                if (aoi.deleteVertex(markerSelected))
+                    aoi.setObb(obb.calculateOrientedBoundingBox(aoi.getAoiVertex()));
                 markerSelected = null;
             }
         });
+
+        // Inicializar
+        obb = new JTSGeometryUtils();
     }
 
     @SuppressLint("MissingPermission")
@@ -71,13 +75,14 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setMapToolbarEnabled(false);
 
-        // Iniciarlizar
+        // Inicializar
         aoi = new AreaOfInterest(mMap);
 
         googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latlng) {
-                aoi.addVertex(latlng);
+                if (aoi.addVertex(latlng))
+                    aoi.setObb(obb.calculateOrientedBoundingBox(aoi.getAoiVertex()));
             }
         });
 
@@ -90,7 +95,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void onMarkerDragEnd(@NonNull Marker marker) {
                 Log.v("Debug", "Drag end " + String.valueOf(marker.getPosition()));
-                aoi.modifyVertex(marker);
+                if (aoi.modifyVertex(marker))
+                    aoi.setObb(obb.calculateOrientedBoundingBox(aoi.getAoiVertex()));
             }
 
             @Override
