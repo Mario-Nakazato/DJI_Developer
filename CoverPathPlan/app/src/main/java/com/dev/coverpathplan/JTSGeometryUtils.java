@@ -62,4 +62,23 @@ public class JTSGeometryUtils {
         Coordinate[] diametroMinimo = getMinimumRectangle(polygon);
         return new ArrayList<>(CoordinateToLatLng(diametroMinimo));
     }
+
+    List<LatLng> pointsInsidePolygons(List<LatLng> polygonVertices, List<LatLng> points) {
+        if (polygonVertices.size() < 3)
+            return new ArrayList<>();
+
+        List<Coordinate> coors = LatLngToCoordinate(polygonVertices);
+        Polygon polygon = createPolygon(coors);
+
+        List<LatLng> pointsInside = new ArrayList<>();
+        for (LatLng point : points) {
+            Coordinate pontoDentro = new Coordinate(point.longitude, point.latitude);
+            org.locationtech.jts.geom.Point ponto = geometryFactory.createPoint(pontoDentro);
+            // Verificando se o ponto está dentro do polígono
+            if (polygon.contains(ponto)) {
+                pointsInside.add(point);
+            }
+        }
+        return pointsInside;
+    }
 }

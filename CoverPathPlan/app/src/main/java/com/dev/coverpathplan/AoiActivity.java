@@ -69,6 +69,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void onClick(View view) {
                 aoi.setGrid(grid.createBoustrophedonGrid(aoi.getObbPoints()));
+                aoi.setGrid(jtsgu.pointsInsidePolygons(aoi.getAoiVertex(), aoi.getGridPoints()));
                 aoi.setBoustrophedonPath();
             }
         });
