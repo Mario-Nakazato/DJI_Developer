@@ -29,8 +29,8 @@ public class GeoCalcGeodeticUtils {
 
         double offsetLargura = 0.5; // deslocamento da posição
         double offsetAltura = 0.5;
-        double overlapLargura = 0.6; // overlap %, caso for 0 será um alinhado não pode ser 1
-        double overlapAltura = 0.6;
+        double overlapLargura = CaptureArea.getOverlapLargura(); // overlap %, caso for 0 será um alinhado não pode ser 1
+        double overlapAltura = CaptureArea.getOverlapAltura();
 
         // Referencia a Largura
         double bearingLargura = EarthCalc.vincenty.bearing(coor1, coor2); // Direção
@@ -81,8 +81,8 @@ public class GeoCalcGeodeticUtils {
 
         double offsetLargura = 0.5;
         double offsetAltura = 0.5;
-        double overlapLargura = 0.6;
-        double overlapAltura = 0.6;
+        double overlapLargura = CaptureArea.getOverlapLargura();
+        double overlapAltura = CaptureArea.getOverlapAltura();
 
         double bearingLargura = EarthCalc.vincenty.bearing(coor1, coor2);
         double lengthLargura = EarthCalc.vincenty.distance(coor1, coor2);

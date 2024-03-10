@@ -11,7 +11,8 @@ public class GsdActivity extends AppCompatActivity {
 
     private TextView textAltitude, textGsdLarCm, textGsdAltCm, textGsdLar, textGsdAlt,
             textFootprintLar, textFootprintAlt, textImgLar, textImgAlt,
-            textSensorLar, textSensorAlt, textFatorCorte, textE35mm, textDistanciaFocal;
+            textSensorLar, textSensorAlt, textFatorCorte, textE35mm, textDistanciaFocal,
+            textOverlapLar, textOverlapAlt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +44,8 @@ public class GsdActivity extends AppCompatActivity {
         textFatorCorte = findViewById(R.id.fatorCorte);
         textE35mm = findViewById(R.id.e35mm);
         textDistanciaFocal = findViewById(R.id.distanciaFocal);
+        textOverlapLar = findViewById(R.id.overlapLar);
+        textOverlapAlt = findViewById(R.id.overlapAlt);
     }
 
     private void updateValues(TextView excludedTextView) {
@@ -61,6 +64,8 @@ public class GsdActivity extends AppCompatActivity {
         if (textFatorCorte != excludedTextView) textFatorCorte.setText(String.valueOf(CaptureArea.getFatorCorte()));
         if (textE35mm != excludedTextView) textE35mm.setText(String.valueOf(CaptureArea.getEquivante35mm()));
         if (textDistanciaFocal != excludedTextView) textDistanciaFocal.setText(String.valueOf(CaptureArea.getDistanciaFocal()));
+        if (textOverlapLar != excludedTextView) textOverlapLar.setText(String.valueOf(CaptureArea.getOverlapLargura()));
+        if (textOverlapAlt != excludedTextView) textOverlapAlt.setText(String.valueOf(CaptureArea.getOverlapAltura()));
     }
 
     private void addTextListeners() {
@@ -78,6 +83,8 @@ public class GsdActivity extends AppCompatActivity {
         textFatorCorte.addTextChangedListener(createTextWatcher(textFatorCorte, CaptureArea::getFatorCorte, CaptureArea::setFatorCorte));
         textE35mm.addTextChangedListener(createTextWatcher(textE35mm, CaptureArea::getEquivante35mm, CaptureArea::setEquivante35mm));
         textDistanciaFocal.addTextChangedListener(createTextWatcher(textDistanciaFocal, CaptureArea::getDistanciaFocal, CaptureArea::setDistanciaFocal));
+        textOverlapLar.addTextChangedListener(createTextWatcher(textOverlapLar, CaptureArea::getOverlapLargura, CaptureArea::setOverlapLargura));
+        textOverlapAlt.addTextChangedListener(createTextWatcher(textOverlapAlt, CaptureArea::getOverlapAltura, CaptureArea::setOverlapAltura));
     }
 
     private TextWatcher createTextWatcher(TextView textView, Getter getter, Setter setter) {

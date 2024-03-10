@@ -18,6 +18,8 @@ public class CaptureArea {
     private static double footprintAltura = altitude * sensorAltura / distanciaFocal; // m
     private static double gsdAltura = footprintAltura / imagemAltura; // m/px
     private static double gsdAlturaCm = gsdAltura * 100; // cm/px
+    private static double overlapLargura = 0.6; // %
+    private static double overlapAltura = 0.6; // %
 
     static double getAltitude() {
         return altitude;
@@ -211,6 +213,26 @@ public class CaptureArea {
         gsdAlturaCm = gsdAltura * 100;
     }
 
+    static double getOverlapLargura() {
+        return overlapLargura;
+    }
+
+    static double getOverlapAltura() {
+        return overlapAltura;
+    }
+
+    static void setOverlapLargura(double overlapLar) {
+        if (overlapLar >= 1)
+            return;
+        overlapLargura = overlapLar;
+    }
+
+    static void setOverlapAltura(double overlapAlt) {
+        if (overlapAlt >= 1)
+            return;
+        overlapAltura = overlapAlt;
+    }
+
     static void printGSD() {
         Log.v("GSD", "Altitude: " + altitude + " m");
         Log.v("GSD", "GSD Largura em cm: " + gsdLarguraCm + " cm/px");
@@ -226,5 +248,7 @@ public class CaptureArea {
         Log.v("GSD", "Fator de Corte: " + fatorCorte);
         Log.v("GSD", "Equivalente 35mm: " + equivante35mm + "mm");
         Log.v("GSD", "Distância Focal: " + distanciaFocal + " mm");
+        Log.v("GSD", "Overlap Largura: " + overlapLargura * 100 + " %");
+        Log.v("GSD", "Overlap Altura: " + overlapAltura * 100 + " %");
     }
 }
