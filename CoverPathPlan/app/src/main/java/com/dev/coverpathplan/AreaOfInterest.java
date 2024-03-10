@@ -19,11 +19,15 @@ public class AreaOfInterest {
     private List<Marker> aoiVertexMarker;
     private Polygon aoi;
     private Polygon obb;
+    private List<LatLng> gridPoints;
+    private List<Marker> gridPointsMarker;
 
     AreaOfInterest(GoogleMap googleMap) {
         this.googleMap = googleMap;
         aoiVertex = new ArrayList<>();
         aoiVertexMarker = new ArrayList<>();
+        gridPoints = new ArrayList<>();
+        gridPointsMarker = new ArrayList<>();
     }
 
     boolean isPolygon() {
@@ -35,8 +39,15 @@ public class AreaOfInterest {
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
         marker.setTitle("V " + marker.getId());
         marker.setTag("vértice");
-        aoiVertexMarker.add(marker);
-        return false;
+        return aoiVertexMarker.add(marker);
+    }
+
+    private boolean addPointMarker(LatLng point) {
+        Marker marker = googleMap.addMarker(new MarkerOptions().position(point).alpha(0.64f)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+        marker.setTitle("P " + marker.getId());
+        marker.setTag("ponto");
+        return gridPointsMarker.add(marker);
     }
 
     boolean addVertex(LatLng vertex) {
@@ -110,5 +121,33 @@ public class AreaOfInterest {
             e.printStackTrace();
             return false;
         }
+    }
+
+    List<LatLng> getObbPoints() {
+        if (obb == null)
+            return new ArrayList<>();
+        return obb.getPoints();
+    }
+
+    boolean setGrid(List<LatLng> points) {
+        for (Marker pointMarker : gridPointsMarker) {
+            pointMarker.remove();
+        }
+        gridPoints.clear();
+        gridPointsMarker.clear();
+        try {
+            gridPoints.addAll(points);
+            for (LatLng point : gridPoints) {
+                addPointMarker(point);
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    List<LatLng> getGridPoints() {
+        return gridPoints;
     }
 }

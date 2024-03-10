@@ -20,6 +20,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.ArrayList;
+
 public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
@@ -30,8 +32,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private Marker vant;
     private Marker markerSelected;
     private AreaOfInterest aoi;
-    private JTSGeometryUtils obb;
-    private Grid grid;
+    private JTSGeometryUtils jtsgu;
+    private GeoCalcGeodeticUtils grid;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,8 +55,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 if (markerSelected == null)
                     return;
                 if (aoi.deleteVertex(markerSelected)) {
-                    aoi.setObb(obb.calculateOrientedBoundingBox(aoi.getAoiVertex()));
-                    //grid.removeAllCells();
+                    aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
+                    aoi.setGrid(new ArrayList<>());
                 }
                 markerSelected = null;
             }
@@ -65,17 +67,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         bGrade.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                grid.removeAllCells();
-                if (aoi.isPolygon()) {
-                    //grid.createGrid(obb.getPlg().getPoints());
-                    //grid.setCells(obb.pointsInsidePolygons(grid.getCells()));
-                    for (LatLng latLng : grid.getCells()) {
-                        Marker cell = mMap.addMarker(new MarkerOptions().position(latLng)
-                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
-                        cell.setTitle(cell.getId());
-                        grid.addCellsMarker(cell);
-                    }
-                }
+                aoi.setGrid(grid.createGrid(aoi.getObbPoints()));
             }
         });
 
@@ -90,8 +82,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         });
 
         // Inicializar
-        obb = new JTSGeometryUtils();
-        grid = new Grid();
+        jtsgu = new JTSGeometryUtils();
+        grid = new GeoCalcGeodeticUtils();
     }
 
     @SuppressLint("MissingPermission")
@@ -118,8 +110,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void onMapClick(LatLng latlng) {
                 if (aoi.addVertex(latlng)) {
-                    aoi.setObb(obb.calculateOrientedBoundingBox(aoi.getAoiVertex()));
-                    //grid.removeAllCells();
+                    aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
+                    aoi.setGrid(new ArrayList<>());
                 }
             }
         });
@@ -134,8 +126,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             public void onMarkerDragEnd(@NonNull Marker marker) {
                 Log.v("Debug", "Drag end " + String.valueOf(marker.getPosition()));
                 if (aoi.modifyVertex(marker)) {
-                    aoi.setObb(obb.calculateOrientedBoundingBox(aoi.getAoiVertex()));
-                    //grid.removeAllCells();
+                    aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
+                    aoi.setGrid(new ArrayList<>());
                 }
             }
 
