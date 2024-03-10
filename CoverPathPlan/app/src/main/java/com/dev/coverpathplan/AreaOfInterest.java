@@ -9,6 +9,10 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.maps.model.StrokeStyle;
+import com.google.android.gms.maps.model.StyleSpan;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +25,7 @@ public class AreaOfInterest {
     private Polygon obb;
     private List<LatLng> gridPoints;
     private List<Marker> gridPointsMarker;
+    private Polyline boustrophedonPath;
 
     AreaOfInterest(GoogleMap googleMap) {
         this.googleMap = googleMap;
@@ -113,7 +118,8 @@ public class AreaOfInterest {
     boolean setObb(List<LatLng> vertex) {
         try {
             if (obb == null)
-                obb = googleMap.addPolygon(new PolygonOptions().addAll(vertex).geodesic(true).strokeColor(Color.BLUE).strokeWidth(14).zIndex(-1));
+                obb = googleMap.addPolygon(new PolygonOptions().addAll(vertex).geodesic(true)
+                        .strokeColor(Color.BLUE).strokeWidth(14).zIndex(-1));
             else
                 obb.setPoints(vertex);
             return true;
@@ -149,5 +155,23 @@ public class AreaOfInterest {
 
     List<LatLng> getGridPoints() {
         return gridPoints;
+    }
+
+    boolean setBoustrophedonPath() {
+        if (gridPoints.isEmpty()) {
+            if (boustrophedonPath != null){
+                boustrophedonPath.remove();
+                boustrophedonPath = null;
+            }
+            return false;
+        }
+
+        if (boustrophedonPath == null)
+            boustrophedonPath = googleMap.addPolyline(new PolylineOptions()
+                    .addAll(gridPoints).geodesic(true).addSpan(new StyleSpan(StrokeStyle
+                            .gradientBuilder(Color.RED, Color.YELLOW).build())));
+        else
+            boustrophedonPath.setPoints(gridPoints);
+        return true;
     }
 }

@@ -57,6 +57,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 if (aoi.deleteVertex(markerSelected)) {
                     aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
                     aoi.setGrid(new ArrayList<>());
+                    aoi.setBoustrophedonPath();
                 }
                 markerSelected = null;
             }
@@ -68,6 +69,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void onClick(View view) {
                 aoi.setGrid(grid.createGrid(aoi.getObbPoints()));
+                aoi.setBoustrophedonPath();
             }
         });
 
@@ -112,6 +114,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 if (aoi.addVertex(latlng)) {
                     aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
                     aoi.setGrid(new ArrayList<>());
+                    aoi.setBoustrophedonPath();
                 }
             }
         });
@@ -128,6 +131,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 if (aoi.modifyVertex(marker)) {
                     aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
                     aoi.setGrid(new ArrayList<>());
+                    aoi.setBoustrophedonPath();
                 }
             }
 
