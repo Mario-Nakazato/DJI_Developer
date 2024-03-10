@@ -68,7 +68,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         bGrade.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                aoi.setGrid(grid.createGrid(aoi.getObbPoints()));
+                aoi.setGrid(grid.createBoustrophedonGrid(aoi.getObbPoints()));
                 aoi.setBoustrophedonPath();
             }
         });
