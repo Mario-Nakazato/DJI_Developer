@@ -7,8 +7,10 @@ import androidx.multidex.MultiDex;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -29,6 +31,7 @@ import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
+import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
 
@@ -38,17 +41,43 @@ public class MainActivity extends AppCompatActivity {
     private static final String[] REQUIRED_PERMISSION_LIST = new String[] {
             Manifest.permission.ACCESS_FINE_LOCATION, // Localização fina
             Manifest.permission.ACCESS_COARSE_LOCATION, // Localização aproximada
+            Manifest.permission.VIBRATE,
+            Manifest.permission.INTERNET,
+            Manifest.permission.ACCESS_WIFI_STATE,
+            Manifest.permission.WAKE_LOCK,
+            Manifest.permission.ACCESS_NETWORK_STATE,
+            Manifest.permission.CHANGE_WIFI_STATE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.BLUETOOTH,
+            Manifest.permission.BLUETOOTH_ADMIN,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.READ_PHONE_STATE,
     };
     private static final int REQUEST_PERMISSION_CODE = 8664;
+    public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
+    private TextView mTextConnectionStatus;
+    private TextView mTextProduct;
     private TextView mVersionTv;
     private DJISDKManager.SDKManagerCallback mDJISDKManagerCallback;
+    private static BaseProduct mProduct;
+    public Handler mHandler;
+    protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            refreshSDKRelativeUI();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Register the broadcast receiver for receiving the device connection's changes.
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(FLAG_CONNECTION_CHANGE);
+        registerReceiver(mReceiver, filter);
+        mHandler = new Handler(Looper.getMainLooper());
 
         initUI();
 
@@ -78,18 +107,30 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onProductDisconnect() {
+                notifyStatusChange();
             }
 
             @Override
             public void onProductConnect(BaseProduct baseProduct) {
+                notifyStatusChange();
             }
 
             @Override
             public void onProductChanged(BaseProduct baseProduct) {
+                notifyStatusChange();
             }
 
             @Override
-            public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent oldComponent, BaseComponent newComponent) {
+            public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent oldComponent,
+                                          BaseComponent newComponent) {
+                if (newComponent != null) {
+                    newComponent.setComponentListener(new BaseComponent.ComponentListener() {
+                        @Override
+                        public void onConnectivityChange(boolean isConnected) {
+                            notifyStatusChange();
+                        }
+                    });
+                }
             }
 
             @Override
@@ -109,6 +150,12 @@ public class MainActivity extends AppCompatActivity {
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
         MultiDex.install(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        unregisterReceiver(mReceiver);
+        super.onDestroy();
     }
 
     @Override
@@ -162,6 +209,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        mTextConnectionStatus = (TextView) findViewById(R.id.text_connection_status);
+        mTextProduct = (TextView) findViewById(R.id.text_product_info);
         mVersionTv = (TextView) findViewById(R.id.textDJISDKVersion);
         mVersionTv.setText("Versão DJI SDK: " + DJISDKManager.getInstance().getSDKVersion());
     }
@@ -170,6 +219,46 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(MainActivity.this, AoiActivity.class);
         startActivity(intent);
     }
+
+    private void refreshSDKRelativeUI() {
+        getProductInstance();
+
+        if (null != mProduct && mProduct.isConnected()) {
+            String str = mProduct instanceof Aircraft ? "Aeronave DJI" : "Dispositivo portátil DJI";
+            mTextConnectionStatus.setText("Status: " + str + " conectado");
+
+            if (null != mProduct.getModel()) {
+                mTextProduct.setText(mProduct.getModel().getDisplayName());
+            } else {
+                mTextProduct.setText("Modelo");
+            }
+            bMap.setEnabled(true);
+        } else {
+            mTextConnectionStatus.setText("Status: Desconectado");
+            mTextProduct.setText("Modelo");
+            bMap.setEnabled(false);
+        }
+    }
+
+    public static synchronized BaseProduct getProductInstance() {
+        if (null == mProduct) {
+            mProduct = DJISDKManager.getInstance().getProduct();
+        }
+        return mProduct;
+    }
+
+    private void notifyStatusChange() {
+        mHandler.removeCallbacks(updateRunnable);
+        mHandler.postDelayed(updateRunnable, 500);
+    }
+
+    private Runnable updateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Intent intent = new Intent(FLAG_CONNECTION_CHANGE);
+            getApplicationContext().sendBroadcast(intent);
+        }
+    };
 
     private void showToast(final String toastMsg) {
         runOnUiThread(new Runnable() {
