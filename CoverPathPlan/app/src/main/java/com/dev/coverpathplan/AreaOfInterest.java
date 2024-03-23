@@ -27,6 +27,12 @@ public class AreaOfInterest {
     private List<Marker> gridPointsMarker;
     private Polyline boustrophedonPath;
     private Marker vant;
+    private List<LatLng> initialPoints;
+    private List<Marker> initialPointsMarker;
+    private Polyline initialPath;
+    private List<LatLng> finalPoints;
+    private List<Marker> finalPointsMarker;
+    private Polyline finalPath;
 
     AreaOfInterest(GoogleMap googleMap) {
         this.googleMap = googleMap;
@@ -34,6 +40,10 @@ public class AreaOfInterest {
         aoiVertexMarker = new ArrayList<>();
         gridPoints = new ArrayList<>();
         gridPointsMarker = new ArrayList<>();
+        initialPoints = new ArrayList<>();
+        initialPointsMarker = new ArrayList<>();
+        finalPoints = new ArrayList<>();
+        finalPointsMarker = new ArrayList<>();
     }
 
     boolean isPolygon() {
@@ -54,6 +64,22 @@ public class AreaOfInterest {
         marker.setTitle("P " + marker.getId());
         marker.setTag("ponto");
         return gridPointsMarker.add(marker);
+    }
+
+    private boolean addInitialPointMarker(LatLng point) {
+        Marker marker = googleMap.addMarker(new MarkerOptions().position(point).alpha(0.64f).draggable(true)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+        marker.setTitle("I " + marker.getId());
+        marker.setTag("inicial");
+        return initialPointsMarker.add(marker);
+    }
+
+    private boolean addFinalPointMarker(LatLng point) {
+        Marker marker = googleMap.addMarker(new MarkerOptions().position(point).alpha(0.64f).draggable(true)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
+        marker.setTitle("F " + marker.getId());
+        marker.setTag("final");
+        return finalPointsMarker.add(marker);
     }
 
     boolean addVertex(LatLng vertex) {
@@ -160,7 +186,7 @@ public class AreaOfInterest {
 
     boolean setBoustrophedonPath() {
         if (gridPoints.isEmpty()) {
-            if (boustrophedonPath != null){
+            if (boustrophedonPath != null) {
                 boustrophedonPath.remove();
                 boustrophedonPath = null;
             }
@@ -207,5 +233,165 @@ public class AreaOfInterest {
     void setVisibleObb(boolean visible) {
         if (obb != null)
             obb.setVisible(visible);
+    }
+
+    void setDraggableInitial(boolean visible) {
+        for (Marker pointMarker : initialPointsMarker) {
+            pointMarker.setDraggable(visible);
+        }
+    }
+
+    void setDraggableFinal(boolean visible) {
+        for (Marker pointMarker : finalPointsMarker) {
+            pointMarker.setDraggable(visible);
+        }
+    }
+
+    boolean addInitialPoint(LatLng point) {
+        try {
+            initialPoints.add(point);
+            addInitialPointMarker(point);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    boolean modifyInitialPoint(Marker pointMarker) {
+        int i = initialPointsMarker.indexOf(pointMarker);
+
+        if (i == -1)
+            return false;
+
+        try {
+            initialPoints.set(i, pointMarker.getPosition());
+            initialPointsMarker.set(i, pointMarker);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    boolean deleteInitialPoint(Marker pointMarker) {
+        int i = initialPointsMarker.indexOf(pointMarker);
+
+        if (i == -1)
+            return false;
+
+        try {
+            initialPoints.remove(i);
+            initialPointsMarker.remove(i).remove();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    boolean addFinalPoint(LatLng point) {
+        try {
+            finalPoints.add(point);
+            addFinalPointMarker(point);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    boolean modifyFinalPoint(Marker pointMarker) {
+        int i = finalPointsMarker.indexOf(pointMarker);
+
+        if (i == -1)
+            return false;
+
+        try {
+            finalPoints.set(i, pointMarker.getPosition());
+            finalPointsMarker.set(i, pointMarker);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    boolean deleteFinalPoint(Marker pointMarker) {
+        int i = finalPointsMarker.indexOf(pointMarker);
+
+        if (i == -1)
+            return false;
+
+        try {
+            finalPoints.remove(i);
+            finalPointsMarker.remove(i).remove();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    boolean setInitialPath() {
+        if (initialPoints.isEmpty()) {
+            if (initialPath != null) {
+                initialPath.remove();
+                initialPath = null;
+            }
+            return false;
+        }
+
+        List<LatLng> unir = new ArrayList<>(initialPoints);
+        if (!gridPoints.isEmpty())
+            unir.add(gridPoints.get(0));
+        else
+            if (!finalPoints.isEmpty())
+                unir.add(finalPoints.get(0));
+
+        if (initialPath == null)
+            initialPath = googleMap.addPolyline(new PolylineOptions()
+                    .addAll(unir).geodesic(true).addSpan(new StyleSpan(Color.RED)));
+        else
+            initialPath.setPoints(unir);
+        return true;
+    }
+
+    boolean setFinalPath() {
+        if (finalPoints.isEmpty()) {
+            if (finalPath != null) {
+                finalPath.remove();
+                finalPath = null;
+            }
+            return false;
+        }
+
+        List<LatLng> unir = new ArrayList<>();
+        if (!gridPoints.isEmpty())
+            unir.add(gridPoints.get(gridPoints.size() - 1));
+        unir.addAll(finalPoints);
+
+        if (finalPath == null)
+            finalPath = googleMap.addPolyline(new PolylineOptions()
+                    .addAll(unir).geodesic(true).addSpan(new StyleSpan(Color.YELLOW)));
+        else
+            finalPath.setPoints(unir);
+        return true;
+    }
+
+    List<LatLng> getInitialPoints() {
+        return initialPoints;
+    }
+
+    List<LatLng> getFinalPoints() {
+        return finalPoints;
+    }
+
+    List<LatLng> getPathPoint() {
+        List<LatLng> unir = new ArrayList<>();
+        unir.addAll(getInitialPoints());
+        unir.addAll(getGridPoints());
+        unir.addAll(getFinalPoints());
+        return unir;
     }
 }

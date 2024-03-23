@@ -100,7 +100,7 @@ public class FlightControllerDJI {
         return new LatLng(locationLat, locationLng);
     }
 
-    public boolean checkGpsCoordination() {
+    boolean checkGpsCoordination() {
         return (locationLat > -90 && locationLat < 90 && locationLng > -180 && locationLng < 180) && (locationLat != 0f && locationLng != 0f);
     }
 

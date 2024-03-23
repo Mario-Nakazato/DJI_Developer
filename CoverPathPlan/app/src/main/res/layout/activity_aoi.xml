@@ -78,6 +78,18 @@
                 android:text="Simular" />
 
             <Button
+                android:id="@+id/run"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Iniciar" />
+
+            <Button
+                android:id="@+id/config"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Config." />
+
+            <Button
                 android:id="@+id/gsd"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

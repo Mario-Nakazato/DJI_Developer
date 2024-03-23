@@ -1,17 +1,21 @@
 package com.dev.coverpathplan;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import com.dev.coverpathplan.databinding.ActivityAoiBinding;
@@ -24,22 +28,31 @@ import com.google.android.gms.maps.model.Marker;
 
 import java.util.ArrayList;
 
+import dji.common.error.DJIError;
+
 public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback, View.OnClickListener {
 
     private GoogleMap mMap;
     private ActivityAoiBinding binding;
-    private Button bExcluir, bGsd, bLocate, bAdd, bIsSimulating;
+    private Button bExcluir, bGsd, bLocate, bAdd, bIsSimulating, bConfig, bRun;
     private Marker markerSelected;
     private int adding = 0;
     private boolean isSimulating = false;
+    private boolean isRunning = false;
+    private float mSpeed = 8.0f;
+    private int mFinishedAction = 1;
     private AreaOfInterest aoi;
     private JTSGeometryUtils jtsgu;
     private GeoCalcGeodeticUtils grid;
     private FlightControllerDJI dji;
+    private MissionOperatorDJI mission;
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            onProductConnectionChange();
+            if (onProductConnectionChange())
+                showToast("Drone conectado");
+            else
+                showToast("Drone desconectado");
         }
     };
 
@@ -65,6 +78,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         jtsgu = new JTSGeometryUtils();
         grid = new GeoCalcGeodeticUtils();
         dji = new FlightControllerDJI();
+        mission = new MissionOperatorDJI();
     }
 
     @SuppressLint("MissingPermission")
@@ -85,7 +99,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             public void onMapClick(LatLng latlng) {
                 switch (adding) {
                     case 1:
-                        // Anterior
+                        aoi.addInitialPoint(latlng);
+                        aoi.setInitialPath();
                         break;
                     case 2:
                         if (aoi.addVertex(latlng)) {
@@ -95,7 +110,9 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                         }
                         break;
                     case 3:
-                        // Posterior
+                        aoi.addFinalPoint(latlng);
+                        aoi.setInitialPath();
+                        aoi.setFinalPath();
                         break;
                     default:
                 }
@@ -111,10 +128,26 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void onMarkerDragEnd(@NonNull Marker marker) {
                 Log.v("Debug", "Drag end " + String.valueOf(marker.getPosition()));
-                if (aoi.modifyVertex(marker)) {
-                    aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
-                    aoi.setGrid(new ArrayList<>());
-                    aoi.setBoustrophedonPath();
+                switch (adding) {
+                    case 1:
+                        if (aoi.modifyInitialPoint(marker)) {
+                            aoi.setInitialPath();
+                        }
+                        break;
+                    case 2:
+                        if (aoi.modifyVertex(marker)) {
+                            aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
+                            aoi.setGrid(new ArrayList<>());
+                            aoi.setBoustrophedonPath();
+                        }
+                        break;
+                    case 3:
+                        if (aoi.modifyFinalPoint(marker)) {
+                            aoi.setInitialPath();
+                            aoi.setFinalPath();
+                        }
+                        break;
+                    default:
                 }
             }
 
@@ -141,6 +174,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     protected void onResume() {
         super.onResume();
         createPath();
+        loadPath();
         onProductConnectionChange();
     }
 
@@ -149,6 +183,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         unregisterReceiver(mReceiver);
         dji.onDestroyController();
         dji.onDestroySimulator();
+        mission.removeListener();
         super.onDestroy();
     }
 
@@ -159,7 +194,16 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             updateDroneLocation.execute();
             cameraUpdate(); // Locate the drone's place
         } else if (id == R.id.add) {
-            add();
+            addPath();
+        } else if (id == R.id.config) {
+            showSettingDialog();
+        } else if (id == R.id.run) {
+            isRunning = !isRunning;
+            if (isRunning)
+                bRun.setText("Parar");
+            else
+                bRun.setText("Iniciar");
+            run();
         }
     }
 
@@ -171,10 +215,26 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             public void onClick(View view) {
                 if (markerSelected == null)
                     return;
-                if (aoi.deleteVertex(markerSelected)) {
-                    aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
-                    aoi.setGrid(new ArrayList<>());
-                    aoi.setBoustrophedonPath();
+                switch (adding) {
+                    case 1:
+                        if (aoi.deleteInitialPoint(markerSelected)) {
+                            aoi.setInitialPath();
+                        }
+                        break;
+                    case 2:
+                        if (aoi.deleteVertex(markerSelected)) {
+                            aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
+                            aoi.setGrid(new ArrayList<>());
+                            aoi.setBoustrophedonPath();
+                        }
+                        break;
+                    case 3:
+                        if (aoi.deleteFinalPoint(markerSelected)) {
+                            aoi.setInitialPath();
+                            aoi.setFinalPath();
+                        }
+                        break;
+                    default:
                 }
                 markerSelected = null;
             }
@@ -196,10 +256,13 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void onClick(View view) {
                 isSimulating = !isSimulating;
-                if (isSimulating)
+                if (isSimulating) {
                     bIsSimulating.setText("Controlar");
-                else
+                    showToast("Simulador ligado");
+                } else {
                     bIsSimulating.setText("Simular");
+                    showToast("Simulador desligado");
+                }
                 onProductConnectionChange();
             }
         });
@@ -207,32 +270,111 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         bLocate = findViewById(R.id.locate);
         bAdd = findViewById(R.id.add);
 
+        bConfig = (Button) findViewById(R.id.config);
+        bRun = (Button) findViewById(R.id.run);
+
         bLocate.setOnClickListener(this);
         bAdd.setOnClickListener(this);
+        bConfig.setOnClickListener(this);
+        bRun.setOnClickListener(this);
     }
 
-    private void add() {
+    private void addPath() {
         adding++;
         switch (adding) {
             case 1:
-                bAdd.setText("Anterior");
+                showToast("Configure o caminho inicial");
+                aoi.setDraggableInitial(true);
+                bAdd.setText("Inicial");
                 break;
             case 2:
+                showToast("Configure caminho de cobertura");
+                aoi.setDraggableInitial(false);
                 aoi.setVisibleVertex(true);
                 aoi.setVisibleObb(true);
-                bAdd.setText("Região");
+                aoi.setInitialPath();
+                bAdd.setText("Cobertura");
                 break;
             case 3:
+                showToast("Configure caminho final");
                 aoi.setVisibleVertex(false);
                 aoi.setVisibleObb(false);
+                aoi.setDraggableFinal(true);
                 createPath();
-                bAdd.setText("Posterior");
+                bAdd.setText("Final");
                 break;
             default:
                 adding = 0;
+                aoi.setDraggableFinal(false);
+                loadPath();
                 bAdd.setText("Caminho");
         }
     }
+
+    private void loadPath() {
+        if (aoi == null)
+            return;
+        if (mission.setPathWaypoint(aoi.getPathPoint())) {
+            DJIError error = mission.loadMission(mFinishedAction, mSpeed);
+            if (error == null) {
+                showToast("Carregamento da missão com sucesso");
+            } else
+                showToast("Falha no carregamento da missão, erro: " + error.getDescription());
+        }
+    }
+
+    private void run() {
+        if (isRunning) {
+            mission.uploadMission(uploadMission);
+        } else {
+            mission.stopMission(stopMission);
+        }
+    }
+
+    ErrorCallback uploadMission = (DJIError error) -> {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (error == null) {
+                    showToast("Upload da missão com sucesso!");
+                    mission.startMission(startMission);
+                } else {
+                    isRunning = false;
+                    bRun.setText("Iniciar");
+                    showToast("Falha no upload da missão, erro: " + error.getDescription() + " tentando novamente...");
+                }
+            }
+        });
+    };
+
+    ErrorCallback startMission = (DJIError error) -> {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                showToast("Início da missão" + (error == null ? " com sucesso" : ", erro: " + error.getDescription()));
+            }
+        });
+    };
+
+    ErrorCallback stopMission = (DJIError error) -> {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                showToast("Parada da missão" + (error == null ? " com sucesso" : ", erro: " + error.getDescription()));
+            }
+        });
+    };
+
+    ErrorCallback finishMission = (DJIError error) -> {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                isRunning = false;
+                bRun.setText("Iniciar");
+                showToast("Missão concluída" + (error == null ? " com sucesso!" : ", erro: " + error.getDescription()));
+            }
+        });
+    };
 
     private void cameraUpdate() {
         LatLng latlng = dji.getLocation();
@@ -243,17 +385,71 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, 19.0f));
     }
 
-    private void createPath(){
+    private void createPath() {
         if (aoi != null) {
             //aoi.setGrid(grid.createStcGrid(aoi.getObbPoints()));
             aoi.setGrid(grid.createBoustrophedonGrid(aoi.getObbPoints()));
             aoi.setGrid(jtsgu.pointsInsidePolygons(aoi.getAoiVertex(), aoi.getGridPoints()));
             aoi.setBoustrophedonPath();
+            aoi.setInitialPath();
+            aoi.setFinalPath();
         }
     }
 
-    private void onProductConnectionChange() {
-        dji.setProduct(MainActivity.getProductInstance(), isSimulating, updateDroneLocation);
+    private void showSettingDialog() {
+        LinearLayout wayPointSettings = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_waypointsetting, null);
+        RadioGroup speed_RG = wayPointSettings.findViewById(R.id.speed);
+        RadioGroup actionAfterFinished_RG = wayPointSettings.findViewById(R.id.actionAfterFinished);
+
+        speed_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                if (checkedId == R.id.lowSpeed) {
+                    mSpeed = 2.0f;
+                } else if (checkedId == R.id.MidSpeed) {
+                    mSpeed = 4.0f;
+                } else if (checkedId == R.id.HighSpeed) {
+                    mSpeed = 8.0f;
+                }
+            }
+        });
+
+        actionAfterFinished_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                if (checkedId == R.id.finishNone) {
+                    mFinishedAction = 0;
+                } else if (checkedId == R.id.finishGoHome) {
+                    mFinishedAction = 1;
+                } else if (checkedId == R.id.finishAutoLanding) {
+                    mFinishedAction = 2;
+                } else if (checkedId == R.id.finishToFirst) {
+                    mFinishedAction = 3;
+                }
+            }
+        });
+
+        new AlertDialog.Builder(this)
+                .setTitle("")
+                .setView(wayPointSettings)
+                .setPositiveButton("Finalizar", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        loadPath();
+                    }
+
+                })
+                .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                })
+                .create()
+                .show();
+    }
+
+    private boolean onProductConnectionChange() {
+        mission.setMissionOperator(MainActivity.getMissionOperatorInstance(), finishMission);
+        return dji.setProduct(MainActivity.getProductInstance(), isSimulating, updateDroneLocation);
     }
 
     StateCallback updateDroneLocation = () -> {

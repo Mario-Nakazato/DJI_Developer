@@ -31,6 +31,7 @@ import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
+import dji.sdk.mission.waypoint.WaypointMissionOperator;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
@@ -38,7 +39,7 @@ import dji.sdk.sdkmanager.DJISDKManager;
 public class MainActivity extends AppCompatActivity {
 
     private Button bMap;
-    private static final String[] REQUIRED_PERMISSION_LIST = new String[] {
+    private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
             Manifest.permission.ACCESS_FINE_LOCATION, // Localização fina
             Manifest.permission.ACCESS_COARSE_LOCATION, // Localização aproximada
             Manifest.permission.VIBRATE,
@@ -60,7 +61,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView mVersionTv;
     private DJISDKManager.SDKManagerCallback mDJISDKManagerCallback;
     private static BaseProduct mProduct;
-    public Handler mHandler;
+    private static WaypointMissionOperator mMissionOperator;
+    private Handler mHandler;
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -245,6 +247,15 @@ public class MainActivity extends AppCompatActivity {
             mProduct = DJISDKManager.getInstance().getProduct();
         }
         return mProduct;
+    }
+
+    public static synchronized WaypointMissionOperator getMissionOperatorInstance() {
+        if (mMissionOperator == null) {
+            if (DJISDKManager.getInstance().getMissionControl() != null) {
+                mMissionOperator = DJISDKManager.getInstance().getMissionControl().getWaypointMissionOperator();
+            }
+        }
+        return mMissionOperator;
     }
 
     private void notifyStatusChange() {
