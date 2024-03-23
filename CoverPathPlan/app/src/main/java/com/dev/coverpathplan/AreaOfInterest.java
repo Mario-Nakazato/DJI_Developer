@@ -197,4 +197,15 @@ public class AreaOfInterest {
             return false;
         }
     }
+
+    void setVisibleVertex(boolean visible) {
+        for (Marker vertexMarker : aoiVertexMarker) {
+            vertexMarker.setVisible(visible);
+        }
+    }
+
+    void setVisibleObb(boolean visible) {
+        if (obb != null)
+            obb.setVisible(visible);
+    }
 }

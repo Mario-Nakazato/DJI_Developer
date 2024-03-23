@@ -95,7 +95,6 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                         }
                         break;
                     case 3:
-                        createPath();
                         // Posterior
                         break;
                     default:
@@ -219,9 +218,13 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 bAdd.setText("Anterior");
                 break;
             case 2:
+                aoi.setVisibleVertex(true);
+                aoi.setVisibleObb(true);
                 bAdd.setText("Região");
                 break;
             case 3:
+                aoi.setVisibleVertex(false);
+                aoi.setVisibleObb(false);
                 createPath();
                 bAdd.setText("Posterior");
                 break;
