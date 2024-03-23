@@ -26,6 +26,7 @@ public class AreaOfInterest {
     private List<LatLng> gridPoints;
     private List<Marker> gridPointsMarker;
     private Polyline boustrophedonPath;
+    private Marker vant;
 
     AreaOfInterest(GoogleMap googleMap) {
         this.googleMap = googleMap;
@@ -173,5 +174,27 @@ public class AreaOfInterest {
         else
             boustrophedonPath.setPoints(gridPoints);
         return true;
+    }
+
+    boolean setVant(LatLng position, double droneRotationYaw) {
+        try {
+            if (vant == null) {
+                vant = googleMap.addMarker(new MarkerOptions().position(position).title("VANT").zIndex(1)
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.aircraft)).flat(true)
+                        .rotation((float) droneRotationYaw).anchor(0.5f, 0.5f));
+                vant.setTag("vant");
+            } else {
+                if (position == null)
+                    vant.setVisible(false);
+                else
+                    vant.setVisible(true);
+                vant.setPosition(position);
+                vant.setRotation((float) droneRotationYaw);
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
