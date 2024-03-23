@@ -2,10 +2,13 @@ package com.dev.coverpathplan;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJIError;
 import dji.common.flightcontroller.FlightControllerState;
 import dji.common.flightcontroller.simulator.InitializationData;
 import dji.common.flightcontroller.simulator.SimulatorState;
+import dji.common.gimbal.Rotation;
+import dji.common.gimbal.RotationMode;
 import dji.common.model.LocationCoordinate2D;
 import dji.common.util.CommonCallbacks;
 import dji.sdk.base.BaseProduct;
@@ -35,6 +38,13 @@ public class FlightControllerDJI {
                 mFlightController = ((Aircraft) product).getFlightController();
                 if (isSimulating)
                     mFlightControllerSimulator = mFlightController.getSimulator();
+                product.getGimbal()
+                        .rotate(new Rotation.Builder().pitch(-90)
+                        .mode(RotationMode.ABSOLUTE_ANGLE)
+                        .yaw(Rotation.NO_ROTATION)
+                        .roll(Rotation.NO_ROTATION)
+                        .build(), null);
+                product.getCamera().setOrientation(SettingsDefinitions.Orientation.LANDSCAPE, null);
             }
         } else {
             return false;

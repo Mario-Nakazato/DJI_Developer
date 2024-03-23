@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GeoCalcGeodeticUtils {
+    static double mBearingLargura = 0;
+
     List<Point> LatLngToPoint(List<LatLng> vertices) {
         List<Point> points = new ArrayList<>();
         for (LatLng vertex : vertices) {
@@ -169,6 +171,7 @@ public class GeoCalcGeodeticUtils {
             Log.v("Grid", "currentDistanceAltura: " + currentDistanceAltura);
             currentDistanceAltura += distanceBetweenFootprintLargura;
         }
+        mBearingLargura = bearingLargura;
 
         // Bloco de log para todas as variáveis
         Log.v("Grid", "offsetAltura: " + offsetAltura + " %");

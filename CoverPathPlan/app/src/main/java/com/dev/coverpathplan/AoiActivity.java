@@ -400,6 +400,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         LinearLayout wayPointSettings = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_waypointsetting, null);
         RadioGroup speed_RG = wayPointSettings.findViewById(R.id.speed);
         RadioGroup actionAfterFinished_RG = wayPointSettings.findViewById(R.id.actionAfterFinished);
+        RadioGroup photo_RG = wayPointSettings.findViewById(R.id.takePhoto);
 
         speed_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
@@ -425,6 +426,17 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                     mFinishedAction = 2;
                 } else if (checkedId == R.id.finishToFirst) {
                     mFinishedAction = 3;
+                }
+            }
+        });
+
+        photo_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                if (checkedId == R.id.yes) {
+                    mission.setTakePhoto(true);
+                } else if (checkedId == R.id.no) {
+                    mission.setTakePhoto(false);
                 }
             }
         });
