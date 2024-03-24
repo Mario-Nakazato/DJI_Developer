@@ -2,72 +2,72 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:layout_marginBottom="16dp"
-    android:layout_marginTop="16dp"
     android:layout_marginLeft="16dp"
-    android:layout_marginRight="16dp">
+    android:layout_marginTop="16dp"
+    android:layout_marginRight="16dp"
+    android:layout_marginBottom="16dp"
+    android:orientation="vertical">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Configuração do ponto de referência"
-        android:layout_gravity="center_horizontal"/>
+        android:layout_gravity="center_horizontal"
+        android:text="Configuração do ponto de referência" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="16dp"
-        android:layout_marginTop="16dp"
         android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp">
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="16dp"
+        android:orientation="horizontal">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Velocidade:"/>
+            android:text="Velocidade:" />
 
         <RadioGroup
+            android:id="@+id/speed"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:id="@+id/speed"
-            android:layout_gravity="center_horizontal">
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal">
 
             <RadioButton
                 android:id="@+id/lowSpeed"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Baixa"/>
+                android:text="Baixa" />
 
             <RadioButton
                 android:id="@+id/MidSpeed"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Média"/>
+                android:text="Média" />
 
             <RadioButton
                 android:id="@+id/HighSpeed"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Alta"/>
+                android:text="Alta" />
         </RadioGroup>
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="16dp"
-        android:layout_marginTop="16dp"
         android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp">
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="16dp"
+        android:orientation="horizontal">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Ação após terminar:"/>
+            android:text="Ação após terminar:" />
     </LinearLayout>
 
     <LinearLayout
@@ -76,74 +76,74 @@
         android:orientation="horizontal">
 
         <RadioGroup
+            android:id="@+id/actionAfterFinished"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:id="@+id/actionAfterFinished"
-            android:layout_gravity="center_horizontal">
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal">
 
             <RadioButton
                 android:id="@+id/finishNone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="5pt"
-                android:text="Nada"/>
+                android:text="Nada"
+                android:textSize="5pt" />
 
             <RadioButton
                 android:id="@+id/finishGoHome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="5pt"
-                android:text="Ir para casa"/>
+                android:text="Ir para casa"
+                android:textSize="5pt" />
 
             <RadioButton
                 android:id="@+id/finishAutoLanding"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="5pt"
-                android:text="Aterrissar"/>
+                android:text="Aterrissar"
+                android:textSize="5pt" />
 
             <RadioButton
                 android:id="@+id/finishToFirst"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="5pt"
-                android:text="Voltar ao Início"/>
+                android:text="Voltar ao Início"
+                android:textSize="5pt" />
         </RadioGroup>
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="16dp"
-        android:layout_marginTop="16dp"
         android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp">
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="16dp"
+        android:orientation="horizontal">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tirar foto:"/>
+            android:text="Tirar foto:" />
 
         <RadioGroup
+            android:id="@+id/takePhoto"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:id="@+id/takePhoto"
-            android:layout_gravity="center_horizontal">
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal">
 
             <RadioButton
                 android:id="@+id/yes"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Sim"/>
+                android:text="Sim" />
 
             <RadioButton
                 android:id="@+id/no"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Não"/>
+                android:text="Não" />
         </RadioGroup>
     </LinearLayout>
 </LinearLayout>

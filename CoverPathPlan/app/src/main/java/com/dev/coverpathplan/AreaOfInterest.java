@@ -59,7 +59,7 @@ public class AreaOfInterest {
     }
 
     private boolean addPointMarker(LatLng point) {
-        Marker marker = googleMap.addMarker(new MarkerOptions().position(point).alpha(0.64f)
+        Marker marker = googleMap.addMarker(new MarkerOptions().position(point).alpha(0.32f)
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
         marker.setTitle("P " + marker.getId());
         marker.setTag("ponto");
@@ -342,18 +342,18 @@ public class AreaOfInterest {
             return false;
         }
 
-        List<LatLng> unir = new ArrayList<>(initialPoints);
+        List<LatLng> join = new ArrayList<>(initialPoints);
         if (!gridPoints.isEmpty())
-            unir.add(gridPoints.get(0));
+            join.add(gridPoints.get(0));
         else
             if (!finalPoints.isEmpty())
-                unir.add(finalPoints.get(0));
+                join.add(finalPoints.get(0));
 
         if (initialPath == null)
             initialPath = googleMap.addPolyline(new PolylineOptions()
-                    .addAll(unir).geodesic(true).addSpan(new StyleSpan(Color.RED)));
+                    .addAll(join).geodesic(true).addSpan(new StyleSpan(Color.RED)));
         else
-            initialPath.setPoints(unir);
+            initialPath.setPoints(join);
         return true;
     }
 
@@ -366,16 +366,16 @@ public class AreaOfInterest {
             return false;
         }
 
-        List<LatLng> unir = new ArrayList<>();
+        List<LatLng> join = new ArrayList<>();
         if (!gridPoints.isEmpty())
-            unir.add(gridPoints.get(gridPoints.size() - 1));
-        unir.addAll(finalPoints);
+            join.add(gridPoints.get(gridPoints.size() - 1));
+        join.addAll(finalPoints);
 
         if (finalPath == null)
             finalPath = googleMap.addPolyline(new PolylineOptions()
-                    .addAll(unir).geodesic(true).addSpan(new StyleSpan(Color.YELLOW)));
+                    .addAll(join).geodesic(true).addSpan(new StyleSpan(Color.YELLOW)));
         else
-            finalPath.setPoints(unir);
+            finalPath.setPoints(join);
         return true;
     }
 
@@ -388,10 +388,10 @@ public class AreaOfInterest {
     }
 
     List<LatLng> getPathPoint() {
-        List<LatLng> unir = new ArrayList<>();
-        unir.addAll(getInitialPoints());
-        unir.addAll(getGridPoints());
-        unir.addAll(getFinalPoints());
-        return unir;
+        List<LatLng> join = new ArrayList<>();
+        join.addAll(getInitialPoints());
+        join.addAll(getGridPoints());
+        join.addAll(getFinalPoints());
+        return join;
     }
 }

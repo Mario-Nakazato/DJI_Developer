@@ -21,30 +21,31 @@ interface StateCallback {
 }
 
 public class FlightControllerDJI {
-    private BaseProduct product;
+    private BaseProduct mProduct;
     private FlightController mFlightController;
     private Simulator mFlightControllerSimulator;
     private boolean isSimulating = true;
     private double locationLat = 181, locationLng = 181, attitudeYaw;
 
     boolean setProduct(BaseProduct Baseproduct, boolean simulate, StateCallback callback) {
-        product = Baseproduct;
+        mProduct = Baseproduct;
         isSimulating = simulate;
         locationLat = 181;
         locationLng = 181;
 
-        if (product != null && product.isConnected()) {
-            if (product instanceof Aircraft) {
-                mFlightController = ((Aircraft) product).getFlightController();
+        if (mProduct != null && mProduct.isConnected()) {
+            if (mProduct instanceof Aircraft) {
+                mFlightController = ((Aircraft) mProduct).getFlightController();
                 if (isSimulating)
                     mFlightControllerSimulator = mFlightController.getSimulator();
-                product.getGimbal()
+                mProduct.getGimbal()
                         .rotate(new Rotation.Builder().pitch(-90)
                         .mode(RotationMode.ABSOLUTE_ANGLE)
                         .yaw(Rotation.NO_ROTATION)
                         .roll(Rotation.NO_ROTATION)
                         .build(), null);
-                product.getCamera().setOrientation(SettingsDefinitions.Orientation.LANDSCAPE, null);
+                mProduct.getCamera().setOrientation(SettingsDefinitions.Orientation.LANDSCAPE, null);
+                mProduct.getCamera().setPhotoAspectRatio(SettingsDefinitions.PhotoAspectRatio.RATIO_4_3, null);
             }
         } else {
             return false;
@@ -69,7 +70,6 @@ public class FlightControllerDJI {
                         new CommonCallbacks.CompletionCallback() {
                             @Override
                             public void onResult(DJIError djiError) {
-
                             }
                         });
                 mFlightControllerSimulator.setStateCallback(new SimulatorState.Callback() {

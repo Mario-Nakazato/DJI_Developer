@@ -34,11 +34,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     private ActivityAoiBinding binding;
-    private Button bExcluir, bGsd, bLocate, bAdd, bIsSimulating, bConfig, bRun;
+    private Button bDelete, bGsd, bLocate, bAdd, bIsSimulating, bConfig, bRun;
     private Marker markerSelected;
     private int adding = 0;
     private boolean isSimulating = false;
-    private boolean isRunning = false;
     private float mSpeed = 8.0f;
     private int mFinishedAction = 1;
     private AreaOfInterest aoi;
@@ -115,6 +114,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                         aoi.setFinalPath();
                         break;
                     default:
+                        showToast("Adicione caminhos pelo botão Caminho");
                 }
             }
         });
@@ -198,19 +198,14 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         } else if (id == R.id.config) {
             showSettingDialog();
         } else if (id == R.id.run) {
-            isRunning = !isRunning;
-            if (isRunning)
-                bRun.setText("Parar");
-            else
-                bRun.setText("Iniciar");
-            run();
+            runMission();
         }
     }
 
     private void initUI() {
-        bExcluir = findViewById(R.id.excluir);
+        bDelete = findViewById(R.id.delete);
 
-        bExcluir.setOnClickListener(new View.OnClickListener() {
+        bDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (markerSelected == null)
@@ -283,12 +278,12 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         adding++;
         switch (adding) {
             case 1:
-                showToast("Configure o caminho inicial");
+                showToast("Caminho inicial");
                 aoi.setDraggableInitial(true);
                 bAdd.setText("Inicial");
                 break;
             case 2:
-                showToast("Configure caminho de cobertura");
+                showToast("Caminho de cobertura");
                 aoi.setDraggableInitial(false);
                 aoi.setVisibleVertex(true);
                 aoi.setVisibleObb(true);
@@ -296,7 +291,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 bAdd.setText("Cobertura");
                 break;
             case 3:
-                showToast("Configure caminho final");
+                showToast("Caminho final");
                 aoi.setVisibleVertex(false);
                 aoi.setVisibleObb(false);
                 aoi.setDraggableFinal(true);
@@ -317,18 +312,17 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         if (mission.setPathWaypoint(aoi.getPathPoint())) {
             DJIError error = mission.loadMission(mFinishedAction, mSpeed);
             if (error == null) {
-                showToast("Carregamento da missão com sucesso");
+                showToast("Missão carregada com sucesso");
             } else
-                showToast("Falha no carregamento da missão, erro: " + error.getDescription());
+                showToast("Falha em carregar a missão, erro: " + error.getDescription());
         }
     }
 
-    private void run() {
-        if (isRunning) {
+    private void runMission() {
+        if (bRun.getText() == "Iniciar")
             mission.uploadMission(uploadMission);
-        } else {
+        else
             mission.stopMission(stopMission);
-        }
     }
 
     ErrorCallback uploadMission = (DJIError error) -> {
@@ -336,12 +330,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void run() {
                 if (error == null) {
-                    showToast("Upload da missão com sucesso!");
                     mission.startMission(startMission);
+                    showToast("Upload da missão com sucesso!");
                 } else {
-                    isRunning = false;
-                    bRun.setText("Iniciar");
-                    showToast("Falha no upload da missão, erro: " + error.getDescription() + " tentando novamente...");
+                    showToast("Falha no upload da missão, erro: " + error.getDescription() + ", tente novamente...");
                 }
             }
         });
@@ -351,7 +343,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                showToast("Início da missão" + (error == null ? " com sucesso" : ", erro: " + error.getDescription()));
+                bRun.setText("Parar");
+                showToast("Missão iniciada" + (error == null ? " com sucesso" : ", erro: " + error.getDescription()));
             }
         });
     };
@@ -360,7 +353,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                showToast("Parada da missão" + (error == null ? " com sucesso" : ", erro: " + error.getDescription()));
+                bRun.setText("Iniciar");
+                showToast("Missão interrompida" + (error == null ? " com sucesso" : ", erro: " + error.getDescription()));
             }
         });
     };
@@ -369,7 +363,6 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                isRunning = false;
                 bRun.setText("Iniciar");
                 showToast("Missão concluída" + (error == null ? " com sucesso!" : ", erro: " + error.getDescription()));
             }
