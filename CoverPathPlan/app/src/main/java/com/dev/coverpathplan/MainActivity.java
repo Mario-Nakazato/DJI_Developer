@@ -236,9 +236,18 @@ public class MainActivity extends AppCompatActivity {
             }
             bMap.setEnabled(true);
         } else {
-            mTextConnectionStatus.setText("Status: Desconectado");
-            mTextProduct.setText("Modelo");
-            bMap.setEnabled(false);
+            if (mProduct instanceof Aircraft) {
+                Aircraft aircraft = (Aircraft) mProduct;
+                if (aircraft.getRemoteController() != null && aircraft.getRemoteController().isConnected()) {
+                    // The product is not connected, but the remote controller is connected
+                    mTextConnectionStatus.setText("Status: apenas RC conectado");
+                    mTextProduct.setText("Controle remoto");
+                }
+            } else {
+                mTextConnectionStatus.setText("Status: Desconectado");
+                mTextProduct.setText("Modelo");
+                bMap.setEnabled(false);
+            }
         }
     }
 
