@@ -319,7 +319,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void runMission() {
-        if (bRun.getText() == "Iniciar")
+        if (bRun.getText().equals("Iniciar"))
             mission.uploadMission(uploadMission);
         else
             mission.stopMission(stopMission);

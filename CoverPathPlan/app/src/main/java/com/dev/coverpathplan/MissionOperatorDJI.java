@@ -87,15 +87,16 @@ public class MissionOperatorDJI {
         }
         pathWaypoint.clear();
         try {
+            actionRotate = new WaypointAction(WaypointActionType.ROTATE_AIRCRAFT, ((int) GeoCalcGeodeticUtils.mBearingLargura + 180) % 360 - 180);
             for (LatLng waypoint : path) {
                 Waypoint mWaypoint = new Waypoint(waypoint.latitude, waypoint.longitude, (float) CaptureArea.getAltitude());
+                if (pathWaypoint.isEmpty())
+                    mWaypoint.addAction(actionRotate);
                 if (takePhoto)
                     mWaypoint.addAction(actionPhoto);
                 pathWaypoint.add(mWaypoint);
                 waypointMissionBuilder.addWaypoint(mWaypoint);
             }
-            actionRotate = new WaypointAction(WaypointActionType.ROTATE_AIRCRAFT, ((int) GeoCalcGeodeticUtils.mBearingLargura + 180) % 360 - 180);
-            pathWaypoint.get(0).addAction(actionRotate);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
