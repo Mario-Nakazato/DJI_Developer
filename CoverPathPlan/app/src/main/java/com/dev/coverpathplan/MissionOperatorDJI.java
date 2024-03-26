@@ -34,13 +34,14 @@ public class MissionOperatorDJI {
     private WaypointMissionFinishedAction mFinishedAction = WaypointMissionFinishedAction.GO_HOME;
     private WaypointMissionHeadingMode mHeadingMode = WaypointMissionHeadingMode.USING_INITIAL_DIRECTION;
     private WaypointMissionOperatorListener eventNotificationListener;
-    WaypointAction actionPhoto, actionRotate;
+    WaypointAction actionPhoto, actionRotate, actionStay;
     private boolean takePhoto = false;
 
     MissionOperatorDJI() {
         pathWaypoint = new ArrayList<>();
         waypointMissionBuilder = new WaypointMission.Builder();
         actionPhoto = new WaypointAction(WaypointActionType.START_TAKE_PHOTO, 1);
+        actionStay = new WaypointAction(WaypointActionType.STAY, 1);
     }
 
     boolean setMissionOperator(WaypointMissionOperator WaypointMissionOperator, ErrorCallback callback) {
@@ -92,6 +93,7 @@ public class MissionOperatorDJI {
                 Waypoint mWaypoint = new Waypoint(waypoint.latitude, waypoint.longitude, (float) CaptureArea.getAltitude());
                 if (pathWaypoint.isEmpty())
                     mWaypoint.addAction(actionRotate);
+                mWaypoint.addAction(actionStay);
                 if (takePhoto)
                     mWaypoint.addAction(actionPhoto);
                 pathWaypoint.add(mWaypoint);

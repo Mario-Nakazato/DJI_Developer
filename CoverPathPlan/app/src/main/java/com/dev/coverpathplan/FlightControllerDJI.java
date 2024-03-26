@@ -46,6 +46,7 @@ public class FlightControllerDJI {
                         .build(), null);
                 mProduct.getCamera().setOrientation(SettingsDefinitions.Orientation.LANDSCAPE, null);
                 mProduct.getCamera().setPhotoAspectRatio(SettingsDefinitions.PhotoAspectRatio.RATIO_4_3, null);
+                mProduct.getCamera().setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, null);
             }
         } else {
             return false;
