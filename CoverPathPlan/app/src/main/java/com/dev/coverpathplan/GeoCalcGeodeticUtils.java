@@ -10,8 +10,24 @@ import com.grum.geocalc.Point;
 import java.util.ArrayList;
 import java.util.List;
 
+class Node {
+    LatLng node;
+    List<LatLng> cells;
+
+    Node() {
+        cells = new ArrayList<>();
+    }
+}
+
 public class GeoCalcGeodeticUtils {
     static double mBearingLargura = 0;
+
+    List<LatLng> nodeToLatLng(List<Node> nodes) {
+        List<LatLng> nodeToLatLng = new ArrayList<>();
+        for (Node node : nodes)
+            nodeToLatLng.add(node.node);
+        return nodeToLatLng;
+    }
 
     List<Point> LatLngToPoint(List<LatLng> vertices) {
         List<Point> points = new ArrayList<>();
@@ -208,7 +224,7 @@ public class GeoCalcGeodeticUtils {
         return cells;
     }
 
-    List<LatLng> createStcGrid(List<LatLng> rectangleVertices) {
+    List<List<Node>> createStcGrid(List<LatLng> rectangleVertices) {
         if (rectangleVertices.size() < 4)
             return new ArrayList<>();
 
@@ -253,17 +269,19 @@ public class GeoCalcGeodeticUtils {
             nRealFootprintLargura++;
         double distanceBetweenFootprintLargura = distanceAltura / nRealFootprintLargura;
 
-        List<LatLng> cells = new ArrayList<>();
+        List<List<LatLng>> cells = new ArrayList<>();
         double currentDistanceAltura = offsetFootprintLargura;
         for (int i1 = 0; i1 <= nRealFootprintLargura; i1++) {
             Point currentCoorLargura = EarthCalc.gcd.pointAt(coor1, bearingAltura, currentDistanceAltura);
             double currentDistanceLargura = offsetFootprintAltura;
+            List<LatLng> row = new ArrayList<>();
             for (int i2 = 0; i2 <= nRealFootprintAltura; i2++) {
                 Point currentCoorAltura = EarthCalc.gcd.pointAt(currentCoorLargura, bearingLargura, currentDistanceLargura);
-                cells.add(new LatLng(currentCoorAltura.latitude, currentCoorAltura.longitude));
+                row.add(new LatLng(currentCoorAltura.latitude, currentCoorAltura.longitude));
                 Log.v("Grid", "currentDistanceLargura: " + currentDistanceLargura);
                 currentDistanceLargura += distanceBetweenFootprintAltura;
             }
+            cells.add(row);
             Log.v("Grid", "currentDistanceAltura: " + currentDistanceAltura);
             currentDistanceAltura += distanceBetweenFootprintLargura;
         }
@@ -311,16 +329,25 @@ public class GeoCalcGeodeticUtils {
         nRealFootprintLargura = (nRealFootprintLargura + 1) / 2 - 1;
         distanceBetweenFootprintLargura *= 2;
 
+        List<List<Node>> nodes = new ArrayList<>();
         currentDistanceAltura = offsetFootprintLargura;
         for (int i1 = 0; i1 <= nRealFootprintLargura; i1++) {
             Point currentCoorLargura = EarthCalc.gcd.pointAt(coor1, bearingAltura, currentDistanceAltura);
             double currentDistanceLargura = offsetFootprintAltura;
+            List<Node> row = new ArrayList<>();
             for (int i2 = 0; i2 <= nRealFootprintAltura; i2++) {
                 Point currentCoorAltura = EarthCalc.gcd.pointAt(currentCoorLargura, bearingLargura, currentDistanceLargura);
-                cells.add(new LatLng(currentCoorAltura.latitude, currentCoorAltura.longitude));
+                Node node = new Node();
+                node.node = new LatLng(currentCoorAltura.latitude, currentCoorAltura.longitude);
+                node.cells.add(cells.get(i1 * 2).get(i2 * 2));
+                node.cells.add(cells.get(i1 * 2).get(i2 * 2 + 1));
+                node.cells.add(cells.get(i1 * 2 + 1).get(i2 * 2));
+                node.cells.add(cells.get(i1 * 2 + 1).get(i2 * 2 + 1));
+                row.add(node);
                 Log.v("Grid", "currentDistanceLargura: " + currentDistanceLargura);
                 currentDistanceLargura += distanceBetweenFootprintAltura;
             }
+            nodes.add(row);
             Log.v("Grid", "currentDistanceAltura: " + currentDistanceAltura);
             currentDistanceAltura += distanceBetweenFootprintLargura;
         }
@@ -357,6 +384,6 @@ public class GeoCalcGeodeticUtils {
         Log.v("Grid Overlap", "OverlapAltura: "
                 + usefulFootprintAltura / CaptureArea.getFootprintAltura() * 100 + " % "
                 + (1 - usefulFootprintAltura / CaptureArea.getFootprintAltura()) * 100 + " %");
-        return cells;
+        return nodes;
     }
 }

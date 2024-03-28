@@ -81,8 +81,9 @@ public class MissionOperatorDJI {
     }
 
     boolean setPathWaypoint(List<LatLng> path) {
-        if (path.isEmpty())
+        if (missionOperator == null || path.isEmpty())
             return false;
+
         for (Waypoint waypoint : pathWaypoint) {
             waypointMissionBuilder.removeWaypoint(waypoint);
         }

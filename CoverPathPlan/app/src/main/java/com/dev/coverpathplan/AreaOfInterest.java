@@ -33,6 +33,7 @@ public class AreaOfInterest {
     private List<LatLng> finalPoints;
     private List<Marker> finalPointsMarker;
     private Polyline finalPath;
+    private List<Polyline> minimumSpanningTree;
 
     AreaOfInterest(GoogleMap googleMap) {
         this.googleMap = googleMap;
@@ -44,6 +45,7 @@ public class AreaOfInterest {
         initialPointsMarker = new ArrayList<>();
         finalPoints = new ArrayList<>();
         finalPointsMarker = new ArrayList<>();
+        minimumSpanningTree = new ArrayList<>();
     }
 
     boolean isPolygon() {
@@ -345,9 +347,8 @@ public class AreaOfInterest {
         List<LatLng> join = new ArrayList<>(initialPoints);
         if (!gridPoints.isEmpty())
             join.add(gridPoints.get(0));
-        else
-            if (!finalPoints.isEmpty())
-                join.add(finalPoints.get(0));
+        else if (!finalPoints.isEmpty())
+            join.add(finalPoints.get(0));
 
         if (initialPath == null)
             initialPath = googleMap.addPolyline(new PolylineOptions()
@@ -393,5 +394,26 @@ public class AreaOfInterest {
         join.addAll(getGridPoints());
         join.addAll(getFinalPoints());
         return join;
+    }
+
+    boolean guideMinimumSpanningTree(List<Node> nodes) {
+        try {
+            for (Polyline arcs : minimumSpanningTree) {
+                arcs.remove();
+            }
+            minimumSpanningTree.clear();
+
+            for (int i = 0; i < nodes.size() - 1; i += 2) {
+                Node sourceLatLng = nodes.get(i);
+                Node targetLatLng = nodes.get(i + 1);
+
+                minimumSpanningTree.add(googleMap.addPolyline(new PolylineOptions().zIndex(-1).geodesic(true)
+                        .add(sourceLatLng.node, targetLatLng.node).addSpan(new StyleSpan(Color.BLUE))));
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

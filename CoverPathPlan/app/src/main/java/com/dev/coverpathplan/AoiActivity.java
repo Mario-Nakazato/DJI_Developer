@@ -40,11 +40,13 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private boolean isSimulating = false;
     private float mSpeed = 8.0f;
     private int mFinishedAction = 1;
+    private int algorithm = 1;
     private AreaOfInterest aoi;
     private JTSGeometryUtils jtsgu;
-    private GeoCalcGeodeticUtils grid;
+    private GeoCalcGeodeticUtils gcgu;
     private FlightControllerDJI dji;
     private MissionOperatorDJI mission;
+    private Fork graph;
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -75,9 +77,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
 
         // Inicializar
         jtsgu = new JTSGeometryUtils();
-        grid = new GeoCalcGeodeticUtils();
+        gcgu = new GeoCalcGeodeticUtils();
         dji = new FlightControllerDJI();
         mission = new MissionOperatorDJI();
+        graph = new Fork();
     }
 
     @SuppressLint("MissingPermission")
@@ -105,7 +108,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                         if (aoi.addVertex(latlng)) {
                             aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
                             aoi.setGrid(new ArrayList<>());
-                            aoi.setBoustrophedonPath();
+                            if (algorithm == 0)
+                                aoi.setBoustrophedonPath();
+                            if (algorithm == 1)
+                                aoi.guideMinimumSpanningTree(new ArrayList<>());
                         }
                         break;
                     case 3:
@@ -138,7 +144,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                         if (aoi.modifyVertex(marker)) {
                             aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
                             aoi.setGrid(new ArrayList<>());
-                            aoi.setBoustrophedonPath();
+                            if (algorithm == 0)
+                                aoi.setBoustrophedonPath();
+                            if (algorithm == 1)
+                                aoi.guideMinimumSpanningTree(new ArrayList<>());
                         }
                         break;
                     case 3:
@@ -220,7 +229,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                         if (aoi.deleteVertex(markerSelected)) {
                             aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
                             aoi.setGrid(new ArrayList<>());
-                            aoi.setBoustrophedonPath();
+                            if (algorithm == 0)
+                                aoi.setBoustrophedonPath();
+                            if (algorithm == 1)
+                                aoi.guideMinimumSpanningTree(new ArrayList<>());
                         }
                         break;
                     case 3:
@@ -380,12 +392,23 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private void createPath() {
         if (aoi != null) {
-            //aoi.setGrid(grid.createStcGrid(aoi.getObbPoints()));
-            aoi.setGrid(grid.createBoustrophedonGrid(aoi.getObbPoints()));
-            aoi.setGrid(jtsgu.pointsInsidePolygons(aoi.getAoiVertex(), aoi.getGridPoints()));
-            aoi.setBoustrophedonPath();
-            aoi.setInitialPath();
-            aoi.setFinalPath();
+            if (algorithm == 0) {
+                aoi.setGrid(gcgu.createBoustrophedonGrid(aoi.getObbPoints()));
+                aoi.setGrid(jtsgu.pointsInsidePolygons(aoi.getAoiVertex(), aoi.getGridPoints()));
+                aoi.setBoustrophedonPath();
+                aoi.setInitialPath();
+                aoi.setFinalPath();
+                aoi.guideMinimumSpanningTree(new ArrayList<>());
+            }
+
+            if (algorithm == 1) {
+                aoi.setGrid(new ArrayList<>());
+                aoi.setBoustrophedonPath();
+
+                GraphStructure gs = graph.SimpleWeightedGraph(gcgu.createStcGrid(aoi.getObbPoints()));
+                aoi.guideMinimumSpanningTree(gs.arcs);
+                aoi.setGrid(gcgu.nodeToLatLng(gs.nodes));
+            }
         }
     }
 
@@ -394,6 +417,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         RadioGroup speed_RG = wayPointSettings.findViewById(R.id.speed);
         RadioGroup actionAfterFinished_RG = wayPointSettings.findViewById(R.id.actionAfterFinished);
         RadioGroup photo_RG = wayPointSettings.findViewById(R.id.takePhoto);
+        RadioGroup algorithm_RG = wayPointSettings.findViewById(R.id.algorithm);
 
         speed_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
@@ -434,11 +458,23 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             }
         });
 
+        algorithm_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                if (checkedId == R.id.bcd) {
+                    algorithm = 0;
+                } else if (checkedId == R.id.stc) {
+                    algorithm = 1;
+                }
+            }
+        });
+
         new AlertDialog.Builder(this)
                 .setTitle("")
                 .setView(wayPointSettings)
                 .setPositiveButton("Finalizar", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
+                        createPath();
                         loadPath();
                     }
 
@@ -453,8 +489,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private boolean onProductConnectionChange() {
-        mission.setMissionOperator(MainActivity.getMissionOperatorInstance(), finishMission);
-        return dji.setProduct(MainActivity.getProductInstance(), isSimulating, updateDroneLocation);
+        boolean isConnected = dji.setProduct(MainActivity.getProductInstance(), isSimulating, updateDroneLocation);
+        if (isConnected)
+            mission.setMissionOperator(MainActivity.getMissionOperatorInstance(), finishMission);
+        return isConnected;
     }
 
     StateCallback updateDroneLocation = () -> {

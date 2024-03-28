@@ -14,136 +14,189 @@
         android:layout_gravity="center_horizontal"
         android:text="Configuração do ponto de referência" />
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="16dp"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Velocidade:" />
+            android:orientation="vertical">
 
-        <RadioGroup
-            android:id="@+id/speed"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:orientation="horizontal">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="16dp"
+                android:orientation="horizontal">
 
-            <RadioButton
-                android:id="@+id/lowSpeed"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="Velocidade:" />
+
+                <RadioGroup
+                    android:id="@+id/speed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:orientation="horizontal">
+
+                    <RadioButton
+                        android:id="@+id/lowSpeed"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Baixa" />
+
+                    <RadioButton
+                        android:id="@+id/MidSpeed"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Média" />
+
+                    <RadioButton
+                        android:id="@+id/HighSpeed"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Alta" />
+                </RadioGroup>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="16dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ação após terminar:" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Baixa" />
+                android:layout_gravity="center"
+                android:orientation="horizontal">
 
-            <RadioButton
-                android:id="@+id/MidSpeed"
+                <RadioGroup
+                    android:id="@+id/actionAfterFinished"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:orientation="horizontal">
+
+                    <RadioButton
+                        android:id="@+id/finishNone"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:text="Nada" />
+
+                    <RadioButton
+                        android:id="@+id/finishGoHome"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:text="Ir para casa" />
+
+                    <RadioButton
+                        android:id="@+id/finishAutoLanding"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:text="Aterrissar" />
+
+                    <RadioButton
+                        android:id="@+id/finishToFirst"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:text="Voltar ao Início" />
+                </RadioGroup>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="16dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Algoritmo de planejamento de caminho de cobertura:" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Média" />
+                android:layout_gravity="center"
+                android:orientation="horizontal">
 
-            <RadioButton
-                android:id="@+id/HighSpeed"
-                android:layout_width="wrap_content"
+                <RadioGroup
+                    android:id="@+id/algorithm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:orientation="horizontal">
+
+                    <RadioButton
+                        android:id="@+id/bcd"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:text="Boustrophedon" />
+
+                    <RadioButton
+                        android:id="@+id/stc"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:text="Cobertura por Árvore Geradora" />
+                </RadioGroup>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Alta" />
-        </RadioGroup>
-    </LinearLayout>
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="16dp"
+                android:orientation="horizontal">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="16dp"
-        android:orientation="horizontal">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="Tirar foto:" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Ação após terminar:" />
-    </LinearLayout>
+                <RadioGroup
+                    android:id="@+id/takePhoto"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:orientation="horizontal">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+                    <RadioButton
+                        android:id="@+id/yes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:text="Sim" />
 
-        <RadioGroup
-            android:id="@+id/actionAfterFinished"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:orientation="horizontal">
-
-            <RadioButton
-                android:id="@+id/finishNone"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Nada"
-                android:textSize="5pt" />
-
-            <RadioButton
-                android:id="@+id/finishGoHome"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Ir para casa"
-                android:textSize="5pt" />
-
-            <RadioButton
-                android:id="@+id/finishAutoLanding"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Aterrissar"
-                android:textSize="5pt" />
-
-            <RadioButton
-                android:id="@+id/finishToFirst"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Voltar ao Início"
-                android:textSize="5pt" />
-        </RadioGroup>
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="16dp"
-        android:orientation="horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Tirar foto:" />
-
-        <RadioGroup
-            android:id="@+id/takePhoto"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:orientation="horizontal">
-
-            <RadioButton
-                android:id="@+id/yes"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Sim" />
-
-            <RadioButton
-                android:id="@+id/no"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Não" />
-        </RadioGroup>
-    </LinearLayout>
+                    <RadioButton
+                        android:id="@+id/no"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:text="Não" />
+                </RadioGroup>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>
