@@ -6,6 +6,7 @@ import org.locationtech.jts.algorithm.MinimumDiameter;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
+import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 
 import java.util.ArrayList;
@@ -73,12 +74,31 @@ public class JTSGeometryUtils {
         List<LatLng> pointsInside = new ArrayList<>();
         for (LatLng point : points) {
             Coordinate pontoDentro = new Coordinate(point.longitude, point.latitude);
-            org.locationtech.jts.geom.Point ponto = geometryFactory.createPoint(pontoDentro);
+            Point ponto = geometryFactory.createPoint(pontoDentro);
             // Verificando se o ponto está dentro do polígono
             if (polygon.contains(ponto)) {
                 pointsInside.add(point);
             }
         }
         return pointsInside;
+    }
+
+    List<LatLng> pointsOutsidePolygons(List<LatLng> polygonVertices, List<LatLng> points) {
+        if (polygonVertices.size() < 3)
+            return new ArrayList<>();
+
+        List<Coordinate> coors = LatLngToCoordinate(polygonVertices);
+        Polygon polygon = createPolygon(coors);
+
+        List<LatLng> pointsOutside = new ArrayList<>();
+        for (LatLng point : points) {
+            Coordinate pontoDentro = new Coordinate(point.longitude, point.latitude);
+            Point ponto = geometryFactory.createPoint(pontoDentro);
+            // Verificando se o ponto está fora do polígono (negando a condição original)
+            if (!polygon.contains(ponto)) {
+                pointsOutside.add(point);
+            }
+        }
+        return pointsOutside;
     }
 }

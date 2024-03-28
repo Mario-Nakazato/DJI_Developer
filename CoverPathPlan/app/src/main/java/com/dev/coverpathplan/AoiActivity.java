@@ -27,6 +27,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import dji.common.error.DJIError;
 
@@ -405,7 +406,9 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 aoi.setGrid(new ArrayList<>());
                 aoi.setBoustrophedonPath();
 
-                GraphStructure gs = graph.SimpleWeightedGraph(gcgu.createStcGrid(aoi.getObbPoints()));
+                List<List<Node>> nodes = gcgu.createStcGrid(aoi.getObbPoints());
+                List<LatLng> node = gcgu.listNodeToLatLng(nodes);
+                GraphStructure gs = graph.SimpleWeightedGraph(nodes, jtsgu.pointsOutsidePolygons(aoi.getAoiVertex(), node));
                 aoi.guideMinimumSpanningTree(gs.arcs);
                 aoi.setGrid(gcgu.nodeToLatLng(gs.nodes));
             }

@@ -1,5 +1,7 @@
 package com.dev.coverpathplan;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
@@ -20,7 +22,7 @@ class GraphStructure {
 }
 
 public class Fork {
-    GraphStructure SimpleWeightedGraph(List<List<Node>> cells) {
+    GraphStructure SimpleWeightedGraph(List<List<Node>> cells, List<LatLng> cellsRemove) {
         GraphStructure gs = new GraphStructure();
         Graph<Node, DefaultWeightedEdge> g = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 
@@ -41,6 +43,19 @@ public class Fork {
                     g.addEdge(cells.get(i1).get(i2), cells.get(i1).get(i2 + 1));
                     g.setEdgeWeight(g.getEdge(cells.get(i1).get(i2), cells.get(i1).get(i2 + 1)), 1);
                 }
+            }
+        }
+
+        for (LatLng x : cellsRemove) {
+            Node nodeToRemove = null;
+            for (Node node : g.vertexSet()) {
+                if (node.node.equals(x)) {
+                    nodeToRemove = node;
+                    break;
+                }
+            }
+            if (nodeToRemove != null) {
+                g.removeVertex(nodeToRemove);
             }
         }
 

@@ -37,6 +37,14 @@ public class GeoCalcGeodeticUtils {
         return points;
     }
 
+    List<LatLng> listNodeToLatLng(List<List<Node>> nodes) {
+        List<LatLng> listNodeToLatLng = new ArrayList<>();
+        for (List<Node> node : nodes)
+            for (Node n : node)
+                listNodeToLatLng.add(n.node);
+        return listNodeToLatLng;
+    }
+
     List<LatLng> createGrid(List<LatLng> rectangleVertices) {
         if (rectangleVertices.size() < 4) // rectangleVertices é 5 por que é um anel linear fechado
             return new ArrayList<>();
