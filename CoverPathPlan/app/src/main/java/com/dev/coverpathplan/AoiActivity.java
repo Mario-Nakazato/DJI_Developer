@@ -409,6 +409,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 List<List<Node>> nodes = gcgu.createStcGrid(aoi.getObbPoints());
                 List<LatLng> node = gcgu.listNodeToLatLng(nodes);
                 GraphStructure gs = graph.SimpleWeightedGraph(nodes, jtsgu.pointsOutsidePolygons(aoi.getAoiVertex(), node));
+                gs = graph.minimumSpanningTree(gs);
                 aoi.guideMinimumSpanningTree(gs.arcs);
                 aoi.setGrid(gcgu.nodeToLatLng(gs.nodes));
             }
