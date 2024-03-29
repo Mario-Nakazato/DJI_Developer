@@ -33,8 +33,8 @@ public class Fork {
         GraphStructure gs = new GraphStructure();
         Graph<Node, DefaultWeightedEdge> g = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 
-        for (List<Node> l : cells) {
-            for (Node c : l) {
+        for (List<Node> cell : cells) {
+            for (Node c : cell) {
                 g.addVertex(c);
             }
         }
@@ -53,10 +53,10 @@ public class Fork {
             }
         }
 
-        for (LatLng x : cellsRemove) {
+        for (LatLng cell : cellsRemove) {
             Node nodeToRemove = null;
             for (Node node : g.vertexSet()) {
-                if (node.node.equals(x)) {
+                if (node.node.equals(cell)) {
                     nodeToRemove = node;
                     break;
                 }
@@ -81,11 +81,14 @@ public class Fork {
     }
 
     GraphStructure minimumSpanningTree(GraphStructure graphStructure) {
+        if (graphStructure.nodes.size() < 2)
+            return graphStructure;
+
         GraphStructure gs = new GraphStructure();
         Graph<Node, DefaultWeightedEdge> g = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 
-        for (Node l : graphStructure.nodes) {
-            g.addVertex(l);
+        for (Node node : graphStructure.nodes) {
+            g.addVertex(node);
         }
 
         for (int i = 0; i < graphStructure.arcs.size() - 1; i += 2) {
@@ -98,17 +101,17 @@ public class Fork {
         PrimMinimumSpanningTree<Node, DefaultWeightedEdge> prim = new PrimMinimumSpanningTree<>(g);
         //KruskalMinimumSpanningTree<Integer, DefaultEdge> prim = new KruskalMinimumSpanningTree<>(g);
         SpanningTreeAlgorithm.SpanningTree<DefaultWeightedEdge> minimumSpanningTree = prim.getSpanningTree();
-        Graph<Node, DefaultWeightedEdge> g1 = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
-        Graphs.addAllEdges(g1, g, minimumSpanningTree.getEdges());
+        Graph<Node, DefaultWeightedEdge> gPrim = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
+        Graphs.addAllEdges(gPrim, g, minimumSpanningTree.getEdges());
 
-        gs.nodes.addAll(g1.vertexSet());
+        gs.nodes.addAll(gPrim.vertexSet());
 
-        for (DefaultWeightedEdge edge : g1.edgeSet()) {
-            Node sourceLatLng = g1.getEdgeSource(edge);
-            Node targetLatLng = g1.getEdgeTarget(edge);
+        for (DefaultWeightedEdge edge : gPrim.edgeSet()) {
+            Node sourceLatLng = gPrim.getEdgeSource(edge);
+            Node targetLatLng = gPrim.getEdgeTarget(edge);
             gs.arcs.add(sourceLatLng);
             gs.arcs.add(targetLatLng);
-            gs.weight.add(g1.getEdgeWeight(edge));
+            gs.weight.add(gPrim.getEdgeWeight(edge));
         }
 
         return gs;
@@ -118,24 +121,24 @@ public class Fork {
         GraphStructure gs = new GraphStructure();
         Graph<LatLng, DefaultWeightedEdge> g = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 
-        for (Node l : graphStructure.nodes) {
-            for (LatLng ll : l.cells)
-                g.addVertex(ll);
+        for (Node node : graphStructure.nodes) {
+            for (LatLng cell : node.cells)
+                g.addVertex(cell);
 
-            int rows = (int) Math.sqrt(l.cells.size()); // Assumindo que a grade seja quadrada
-            for (int i = 0; i < l.cells.size(); i++) {
-                LatLng currentNode = l.cells.get(i);
+            int rows = (int) Math.sqrt(node.cells.size()); // Assumindo que a grade seja quadrada
+            for (int i = 0; i < node.cells.size(); i++) {
+                LatLng currentNode = node.cells.get(i);
                 int currentRow = i / rows;
                 int currentCol = i % rows;
 
                 if (currentCol < rows - 1) {
-                    LatLng rightNode = l.cells.get(i + 1);
+                    LatLng rightNode = node.cells.get(i + 1);
                     g.addEdge(currentNode, rightNode);
                     g.setEdgeWeight(g.getEdge(currentNode, rightNode), 2);
                 }
 
                 if (currentRow < rows - 1) {
-                    LatLng bottomNode = l.cells.get(i + rows);
+                    LatLng bottomNode = node.cells.get(i + rows);
                     g.addEdge(currentNode, bottomNode);
                     g.setEdgeWeight(g.getEdge(currentNode, bottomNode), 1);
                 }

@@ -32,7 +32,7 @@ public class MissionOperatorDJI {
     private WaypointMissionOperator missionOperator;
     private WaypointMission.Builder waypointMissionBuilder;
     private List<Waypoint> pathWaypoint;
-    private float mSpeed = 8.0f;
+    private float mSpeed = 4.0f;
     private WaypointMissionFinishedAction mFinishedAction = WaypointMissionFinishedAction.GO_HOME;
     private WaypointMissionHeadingMode mHeadingMode = WaypointMissionHeadingMode.USING_INITIAL_DIRECTION;
     private WaypointMissionOperatorListener eventNotificationListener;
