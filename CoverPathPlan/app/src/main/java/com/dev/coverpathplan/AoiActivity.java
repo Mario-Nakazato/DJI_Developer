@@ -1,6 +1,7 @@
 package com.dev.coverpathplan;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -10,6 +11,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -31,6 +33,8 @@ import java.util.List;
 
 import dji.common.error.DJIError;
 
+@SuppressLint("SetTextI18n")
+@SuppressWarnings({"FieldCanBeLocal", "Convert2Lambda"})
 public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback, View.OnClickListener {
 
     private GoogleMap mMap;
@@ -39,9 +43,9 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private Marker markerSelected;
     private int adding = 0;
     private boolean isSimulating = false;
-    private float mSpeed = 8.0f;
+    private float mSpeed = 4.0f;
     private int mFinishedAction = 1;
-    private int algorithm = 1;
+    private int algorithm = 0;
     private AreaOfInterest aoi;
     private JTSGeometryUtils jtsgu;
     private GeoCalcGeodeticUtils gcgu;
@@ -58,6 +62,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         }
     };
 
+    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,11 +73,12 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+        assert mapFragment != null;
         mapFragment.getMapAsync(this);
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(MainActivity.FLAG_CONNECTION_CHANGE);
-        registerReceiver(mReceiver, filter);
+        registerReceiver(mReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
 
         initUI();
 
@@ -99,7 +105,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
 
         googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
-            public void onMapClick(LatLng latlng) {
+            public void onMapClick(@NonNull LatLng latlng) {
                 switch (adding) {
                     case 1:
                         aoi.addInitialPoint(latlng);
@@ -109,8 +115,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                         if (aoi.addVertex(latlng)) {
                             aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
                             aoi.setGrid(new ArrayList<>());
-                            if (algorithm == 0)
-                                aoi.setPathPlanning();
+                            aoi.setPathPlanning();
                             if (algorithm == 1)
                                 aoi.guideMinimumSpanningTree(new ArrayList<>());
                         }
@@ -121,7 +126,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                         aoi.setFinalPath();
                         break;
                     default:
-                        showToast("Adicione caminhos pelo botão Caminho");
+                        showToast("Defina caminhos no botão Caminho");
                 }
             }
         });
@@ -129,12 +134,12 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
             @Override
             public void onMarkerDrag(@NonNull Marker marker) {
-                Log.v("Debug", "Drag " + String.valueOf(marker.getPosition()));
+                Log.v("Debug", "Drag " + marker.getPosition());
             }
 
             @Override
             public void onMarkerDragEnd(@NonNull Marker marker) {
-                Log.v("Debug", "Drag end " + String.valueOf(marker.getPosition()));
+                Log.v("Debug", "Drag end " + marker.getPosition());
                 switch (adding) {
                     case 1:
                         if (aoi.modifyInitialPoint(marker)) {
@@ -145,8 +150,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                         if (aoi.modifyVertex(marker)) {
                             aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
                             aoi.setGrid(new ArrayList<>());
-                            if (algorithm == 0)
-                                aoi.setPathPlanning();
+                            aoi.setPathPlanning();
                             if (algorithm == 1)
                                 aoi.guideMinimumSpanningTree(new ArrayList<>());
                         }
@@ -163,14 +167,14 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
 
             @Override
             public void onMarkerDragStart(@NonNull Marker marker) {
-                Log.v("Debug", "Drag start " + String.valueOf(marker.getPosition()));
+                Log.v("Debug", "Drag start " + marker.getPosition());
             }
         });
 
         googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(@NonNull Marker marker) {
-                Log.v("Debug", "Click " + String.valueOf(marker.getPosition()));
+                Log.v("Debug", "Click " + marker.getPosition());
                 if (!marker.equals(markerSelected))
                     markerSelected = marker;
                 else
@@ -230,8 +234,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                         if (aoi.deleteVertex(markerSelected)) {
                             aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
                             aoi.setGrid(new ArrayList<>());
-                            if (algorithm == 0)
-                                aoi.setPathPlanning();
+                            aoi.setPathPlanning();
                             if (algorithm == 1)
                                 aoi.guideMinimumSpanningTree(new ArrayList<>());
                         }
@@ -278,8 +281,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         bLocate = findViewById(R.id.locate);
         bAdd = findViewById(R.id.add);
 
-        bConfig = (Button) findViewById(R.id.config);
-        bRun = (Button) findViewById(R.id.run);
+        bConfig = findViewById(R.id.config);
+        bRun = findViewById(R.id.run);
 
         bLocate.setOnClickListener(this);
         bAdd.setOnClickListener(this);
@@ -288,35 +291,38 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void addPath() {
-        adding++;
-        switch (adding) {
-            case 1:
-                showToast("Caminho inicial");
-                aoi.setDraggableInitial(true);
-                bAdd.setText("Inicial");
-                break;
-            case 2:
-                showToast("Caminho de cobertura");
-                aoi.setDraggableInitial(false);
-                aoi.setVisibleVertex(true);
-                aoi.setVisibleObb(true);
-                aoi.setInitialPath();
-                bAdd.setText("Cobertura");
-                break;
-            case 3:
-                showToast("Caminho final");
-                aoi.setVisibleVertex(false);
-                aoi.setVisibleObb(false);
-                aoi.setDraggableFinal(true);
-                createPath();
-                bAdd.setText("Final");
-                break;
-            default:
-                adding = 0;
-                aoi.setDraggableFinal(false);
-                loadPath();
-                bAdd.setText("Caminho");
-        }
+        if (bRun.getText().equals("Iniciar")) {
+            adding++;
+            switch (adding) {
+                case 1:
+                    showToast("Caminho inicial");
+                    aoi.setDraggableInitial(true);
+                    bAdd.setText("Inicial");
+                    break;
+                case 2:
+                    showToast("Caminho de cobertura");
+                    aoi.setDraggableInitial(false);
+                    aoi.setVisibleVertex(true);
+                    aoi.setVisibleObb(true);
+                    aoi.setInitialPath();
+                    bAdd.setText("Cobertura");
+                    break;
+                case 3:
+                    showToast("Caminho final");
+                    aoi.setVisibleVertex(false);
+                    aoi.setVisibleObb(false);
+                    aoi.setDraggableFinal(true);
+                    createPath();
+                    bAdd.setText("Final");
+                    break;
+                default:
+                    adding = 0;
+                    aoi.setDraggableFinal(false);
+                    loadPath();
+                    bAdd.setText("Caminho");
+            }
+        } else
+            showToast("Missão em execução, não pode definir caminhos");
     }
 
     private void loadPath() {
@@ -332,55 +338,50 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void runMission() {
-        if (bRun.getText().equals("Iniciar"))
-            mission.uploadMission(uploadMission);
+        if (bAdd.getText().equals("Caminho"))
+            if (bRun.getText().equals("Iniciar"))
+                mission.uploadMission(uploadMission);
+            else
+                mission.stopMission(stopMission);
         else
-            mission.stopMission(stopMission);
+            showToast("Termine de definir o caminho antes de iniciar a missão");
     }
 
-    ErrorCallback uploadMission = (DJIError error) -> {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (error == null) {
-                    mission.startMission(startMission);
-                    showToast("Upload da missão com sucesso!");
-                } else {
-                    showToast("Falha no upload da missão, erro: " + error.getDescription() + ", tente novamente...");
-                }
+    ErrorCallback uploadMission = (DJIError error) -> runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+            if (error == null) {
+                mission.startMission(startMission);
+                showToast("Upload da missão com sucesso!");
+            } else {
+                showToast("Falha no upload da missão, erro: " + error.getDescription() + ", tente novamente...");
             }
-        });
-    };
+        }
+    });
 
-    ErrorCallback startMission = (DJIError error) -> {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                bRun.setText("Parar");
-                showToast("Missão iniciada" + (error == null ? " com sucesso" : ", erro: " + error.getDescription()));
-            }
-        });
-    };
+    ErrorCallback startMission = (DJIError error) -> runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+            bRun.setText("Parar");
+            showToast("Missão iniciada" + (error == null ? " com sucesso" : ", erro: " + error.getDescription()));
+        }
+    });
 
-    ErrorCallback stopMission = (DJIError error) -> {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                bRun.setText("Iniciar");
-                showToast("Missão interrompida" + (error == null ? " com sucesso" : ", erro: " + error.getDescription()));
-            }
-        });
-    };
+    ErrorCallback stopMission = (DJIError error) -> runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+            bRun.setText("Iniciar");
+            showToast("Missão interrompida" + (error == null ? " com sucesso" : ", erro: " + error.getDescription()));
+        }
+    });
 
-    ErrorCallback finishMission = (DJIError error) -> {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                bRun.setText("Iniciar");
-                showToast("Missão concluída" + (error == null ? " com sucesso!" : ", erro: " + error.getDescription()));
-            }
-        });
-    };
+    ErrorCallback finishMission = (DJIError error) -> runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+            bRun.setText("Iniciar");
+            showToast("Missão concluída" + (error == null ? " com sucesso!" : ", erro: " + error.getDescription()));
+        }
+    });
 
     private void cameraUpdate() {
         LatLng latlng = dji.getLocation();
@@ -498,15 +499,13 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         return isConnected;
     }
 
-    StateCallback updateDroneLocation = () -> {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                LatLng latlng = dji.getLocation();
-                aoi.setVant(latlng, dji.getAttitudeYaw());
-            }
-        });
-    };
+    StateCallback updateDroneLocation = () -> runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+            LatLng latlng = dji.getLocation();
+            aoi.setVant(latlng, dji.getAttitudeYaw());
+        }
+    });
 
     private void showToast(final String toastMsg) {
         runOnUiThread(new Runnable() {

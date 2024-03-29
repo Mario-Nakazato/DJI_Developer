@@ -1,12 +1,14 @@
 package com.dev.coverpathplan;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.multidex.MultiDex;
 
 import android.Manifest;
-import android.app.Activity;
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -36,9 +38,11 @@ import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
 
+@SuppressLint("SetTextI18n")
+@SuppressWarnings("Convert2Lambda")
 public class MainActivity extends AppCompatActivity {
 
-    private Button bMap;
+    private Button bMap, bDebug;
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
             Manifest.permission.ACCESS_FINE_LOCATION, // Localização fina
             Manifest.permission.ACCESS_COARSE_LOCATION, // Localização aproximada
@@ -70,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
         // Register the broadcast receiver for receiving the device connection's changes.
         IntentFilter filter = new IntentFilter();
         filter.addAction(FLAG_CONNECTION_CHANGE);
-        registerReceiver(mReceiver, filter);
+        registerReceiver(mReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         mHandler = new Handler(Looper.getMainLooper());
 
         initUI();
@@ -87,8 +92,8 @@ public class MainActivity extends AppCompatActivity {
             //Listens to the SDK registration result
             @Override
             public void onRegister(DJIError error) {
+                Handler handler = new Handler(Looper.getMainLooper());
                 if (error == DJISDKError.REGISTRATION_SUCCESS) {
-                    Handler handler = new Handler(Looper.getMainLooper());
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -97,7 +102,6 @@ public class MainActivity extends AppCompatActivity {
                     });
                     DJISDKManager.getInstance().startConnectionToProduct();
                 } else {
-                    Handler handler = new Handler(Looper.getMainLooper());
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -161,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -187,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
         if (missingPermission.isEmpty()) {
             DJISDKManager.getInstance().registerApp(getApplicationContext(), mDJISDKManagerCallback);
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            ActivityCompat.requestPermissions((Activity) this,
+            ActivityCompat.requestPermissions(this,
                     missingPermission.toArray(new String[missingPermission.size()]),
                     REQUEST_PERMISSION_CODE);
         }
@@ -211,9 +215,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mTextConnectionStatus = (TextView) findViewById(R.id.text_connection_status);
-        mTextProduct = (TextView) findViewById(R.id.text_product_info);
-        mVersionTv = (TextView) findViewById(R.id.textDJISDKVersion);
+        bDebug = findViewById(R.id.debug);
+
+        bDebug.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                bMap.setEnabled(true);
+            }
+        });
+
+        mTextConnectionStatus = findViewById(R.id.text_connection_status);
+        mTextProduct = findViewById(R.id.text_product_info);
+        mVersionTv = findViewById(R.id.textDJISDKVersion);
         mVersionTv.setText("Versão DJI SDK: " + DJISDKManager.getInstance().getSDKVersion());
     }
 

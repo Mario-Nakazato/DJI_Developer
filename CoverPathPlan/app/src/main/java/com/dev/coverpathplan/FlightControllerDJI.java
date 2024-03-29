@@ -1,5 +1,7 @@
 package com.dev.coverpathplan;
 
+import androidx.annotation.NonNull;
+
 import com.google.android.gms.maps.model.LatLng;
 
 import dji.common.camera.SettingsDefinitions;
@@ -20,6 +22,7 @@ interface StateCallback {
     void execute();
 }
 
+@SuppressWarnings("Convert2Lambda")
 public class FlightControllerDJI {
     private BaseProduct mProduct;
     private FlightController mFlightController;
@@ -56,7 +59,7 @@ public class FlightControllerDJI {
             if (mFlightController != null) {
                 mFlightController.setStateCallback(new FlightControllerState.Callback() {
                     @Override
-                    public void onUpdate(FlightControllerState djiFlightControllerCurrentState) {
+                    public void onUpdate(@NonNull FlightControllerState djiFlightControllerCurrentState) {
                         locationLat = djiFlightControllerCurrentState.getAircraftLocation().getLatitude();
                         locationLng = djiFlightControllerCurrentState.getAircraftLocation().getLongitude();
                         attitudeYaw = djiFlightControllerCurrentState.getAttitude().yaw;
@@ -68,14 +71,14 @@ public class FlightControllerDJI {
         } else {
             if (mFlightControllerSimulator != null) {
                 mFlightControllerSimulator.start(InitializationData.createInstance(new LocationCoordinate2D(-23.1858535, -50.6574255), 10, 12),
-                        new CommonCallbacks.CompletionCallback() {
+                        new CommonCallbacks.CompletionCallback<DJIError>() {
                             @Override
                             public void onResult(DJIError djiError) {
                             }
                         });
                 mFlightControllerSimulator.setStateCallback(new SimulatorState.Callback() {
                     @Override
-                    public void onUpdate(SimulatorState simulatorState) {
+                    public void onUpdate(@NonNull SimulatorState simulatorState) {
                         locationLat = simulatorState.getLocation().getLatitude();
                         locationLng = simulatorState.getLocation().getLongitude();
                         attitudeYaw = simulatorState.getYaw();
@@ -95,7 +98,7 @@ public class FlightControllerDJI {
 
     void onDestroySimulator() {
         if (mFlightControllerSimulator != null) {
-            mFlightControllerSimulator.stop(new CommonCallbacks.CompletionCallback() {
+            mFlightControllerSimulator.stop(new CommonCallbacks.CompletionCallback<DJIError>() {
                 @Override
                 public void onResult(DJIError djiError) {
 

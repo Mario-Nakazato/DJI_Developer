@@ -1,5 +1,6 @@
 package com.dev.coverpathplan;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -26,6 +27,7 @@ interface ErrorCallback {
     void execute(DJIError error);
 }
 
+@SuppressWarnings("Convert2Lambda")
 public class MissionOperatorDJI {
     private WaypointMissionOperator missionOperator;
     private WaypointMission.Builder waypointMissionBuilder;
@@ -49,15 +51,15 @@ public class MissionOperatorDJI {
         if (missionOperator != null) {
             eventNotificationListener = new WaypointMissionOperatorListener() {
                 @Override
-                public void onDownloadUpdate(WaypointMissionDownloadEvent downloadEvent) {
+                public void onDownloadUpdate(@NonNull WaypointMissionDownloadEvent downloadEvent) {
                 }
 
                 @Override
-                public void onUploadUpdate(WaypointMissionUploadEvent uploadEvent) {
+                public void onUploadUpdate(@NonNull WaypointMissionUploadEvent uploadEvent) {
                 }
 
                 @Override
-                public void onExecutionUpdate(WaypointMissionExecutionEvent executionEvent) {
+                public void onExecutionUpdate(@NonNull WaypointMissionExecutionEvent executionEvent) {
                 }
 
                 @Override
@@ -138,7 +140,7 @@ public class MissionOperatorDJI {
 
     void uploadMission(ErrorCallback callback) {
         if (missionOperator != null)
-            missionOperator.uploadMission(new CommonCallbacks.CompletionCallback() {
+            missionOperator.uploadMission(new CommonCallbacks.CompletionCallback<DJIError>() {
                 @Override
                 public void onResult(DJIError error) {
                     callback.execute(error);
@@ -150,7 +152,7 @@ public class MissionOperatorDJI {
 
     void startMission(ErrorCallback callback) {
         if (missionOperator != null)
-            missionOperator.startMission(new CommonCallbacks.CompletionCallback() {
+            missionOperator.startMission(new CommonCallbacks.CompletionCallback<DJIError>() {
                 @Override
                 public void onResult(DJIError error) {
                     callback.execute(error);
@@ -160,7 +162,7 @@ public class MissionOperatorDJI {
 
     void stopMission(ErrorCallback callback) {
         if (missionOperator != null)
-            missionOperator.stopMission(new CommonCallbacks.CompletionCallback() {
+            missionOperator.stopMission(new CommonCallbacks.CompletionCallback<DJIError>() {
                 @Override
                 public void onResult(DJIError error) {
                     callback.execute(error);

@@ -12,7 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:text="Configuração do ponto de referência" />
+        android:text="Configuração" />
 
     <ScrollView
         android:layout_width="match_parent"
@@ -199,4 +199,5 @@
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
+
 </LinearLayout>

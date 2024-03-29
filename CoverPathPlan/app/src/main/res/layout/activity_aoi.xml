@@ -83,15 +83,15 @@
         android:layout_height="75dp"
         android:layout_alignParentLeft="true"
         android:layout_marginLeft="8dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="40dp"
         android:background="@color/black">
 
         <!-- Widget to see first person view (FPV) -->
         <dji.ux.widget.FPVWidget
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            custom:sourceCameraNameVisibility="false"
-            android:layout_gravity="center"/>
+            android:layout_gravity="center"
+            custom:sourceCameraNameVisibility="false" />
 
         <dji.ux.widget.FPVOverlayWidget
             android:layout_width="match_parent"
@@ -286,4 +286,5 @@
         android:layout_below="@id/signal"
         android:visibility="gone"
         custom:excludeItem="ESCStatus" />
+
 </RelativeLayout>

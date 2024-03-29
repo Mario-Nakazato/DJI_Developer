@@ -51,6 +51,7 @@ public class GeoCalcGeodeticUtils {
         return points;
     }
 
+    @SuppressWarnings("unused")
     List<LatLng> createGrid(List<LatLng> rectangleVertices) {
         if (rectangleVertices.size() < 4) // rectangleVertices é 5 por que é um anel linear fechado
             return new ArrayList<>();
