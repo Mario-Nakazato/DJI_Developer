@@ -186,7 +186,7 @@ public class AreaOfInterest {
         return gridPoints;
     }
 
-    boolean setBoustrophedonPath() {
+    boolean setPathPlanning() {
         if (gridPoints.isEmpty()) {
             if (boustrophedonPath != null) {
                 boustrophedonPath.remove();

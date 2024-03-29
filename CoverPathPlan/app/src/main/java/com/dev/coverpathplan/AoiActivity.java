@@ -110,7 +110,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                             aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
                             aoi.setGrid(new ArrayList<>());
                             if (algorithm == 0)
-                                aoi.setBoustrophedonPath();
+                                aoi.setPathPlanning();
                             if (algorithm == 1)
                                 aoi.guideMinimumSpanningTree(new ArrayList<>());
                         }
@@ -146,7 +146,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                             aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
                             aoi.setGrid(new ArrayList<>());
                             if (algorithm == 0)
-                                aoi.setBoustrophedonPath();
+                                aoi.setPathPlanning();
                             if (algorithm == 1)
                                 aoi.guideMinimumSpanningTree(new ArrayList<>());
                         }
@@ -231,7 +231,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                             aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
                             aoi.setGrid(new ArrayList<>());
                             if (algorithm == 0)
-                                aoi.setBoustrophedonPath();
+                                aoi.setPathPlanning();
                             if (algorithm == 1)
                                 aoi.guideMinimumSpanningTree(new ArrayList<>());
                         }
@@ -396,22 +396,21 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             if (algorithm == 0) {
                 aoi.setGrid(gcgu.createBoustrophedonGrid(aoi.getObbPoints()));
                 aoi.setGrid(jtsgu.pointsInsidePolygons(aoi.getAoiVertex(), aoi.getGridPoints()));
-                aoi.setBoustrophedonPath();
+                aoi.setPathPlanning();
                 aoi.setInitialPath();
                 aoi.setFinalPath();
                 aoi.guideMinimumSpanningTree(new ArrayList<>());
             }
 
             if (algorithm == 1) {
-                aoi.setGrid(new ArrayList<>());
-                aoi.setBoustrophedonPath();
-
                 List<List<Node>> nodes = gcgu.createStcGrid(aoi.getObbPoints());
                 List<LatLng> node = gcgu.listNodeToLatLng(nodes);
                 GraphStructure gs = graph.SimpleWeightedGraph(nodes, jtsgu.pointsOutsidePolygons(aoi.getAoiVertex(), node));
                 gs = graph.minimumSpanningTree(gs);
                 aoi.guideMinimumSpanningTree(gs.arcs);
+                gs = graph.pathGraph(gs);
                 aoi.setGrid(gcgu.nodeToLatLng(gs.nodes));
+                aoi.setPathPlanning();
             }
         }
     }

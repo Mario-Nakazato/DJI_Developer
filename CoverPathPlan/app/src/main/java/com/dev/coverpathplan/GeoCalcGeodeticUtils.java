@@ -22,19 +22,17 @@ class Node {
 public class GeoCalcGeodeticUtils {
     static double mBearingLargura = 0;
 
+    static double calculateDistance(LatLng value1, LatLng value2) {
+        Point coor1 = Point.at(Coordinate.fromDegrees(value1.latitude), Coordinate.fromDegrees(value1.longitude));
+        Point coor2 = Point.at(Coordinate.fromDegrees(value2.latitude), Coordinate.fromDegrees(value2.longitude));
+        return EarthCalc.vincenty.distance(coor1, coor2);
+    }
+
     List<LatLng> nodeToLatLng(List<Node> nodes) {
         List<LatLng> nodeToLatLng = new ArrayList<>();
         for (Node node : nodes)
             nodeToLatLng.add(node.node);
         return nodeToLatLng;
-    }
-
-    List<Point> LatLngToPoint(List<LatLng> vertices) {
-        List<Point> points = new ArrayList<>();
-        for (LatLng vertex : vertices) {
-            points.add(Point.at(Coordinate.fromDegrees(vertex.latitude), Coordinate.fromDegrees(vertex.longitude)));
-        }
-        return points;
     }
 
     List<LatLng> listNodeToLatLng(List<List<Node>> nodes) {
@@ -43,6 +41,14 @@ public class GeoCalcGeodeticUtils {
             for (Node n : node)
                 listNodeToLatLng.add(n.node);
         return listNodeToLatLng;
+    }
+
+    List<Point> LatLngToPoint(List<LatLng> vertices) {
+        List<Point> points = new ArrayList<>();
+        for (LatLng vertex : vertices) {
+            points.add(Point.at(Coordinate.fromDegrees(vertex.latitude), Coordinate.fromDegrees(vertex.longitude)));
+        }
+        return points;
     }
 
     List<LatLng> createGrid(List<LatLng> rectangleVertices) {
