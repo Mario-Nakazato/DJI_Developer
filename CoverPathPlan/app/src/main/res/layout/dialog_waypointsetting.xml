@@ -53,13 +53,13 @@
                         android:text="Baixa" />
 
                     <RadioButton
-                        android:id="@+id/MidSpeed"
+                        android:id="@+id/midSpeed"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Média" />
 
                     <RadioButton
-                        android:id="@+id/HighSpeed"
+                        android:id="@+id/highSpeed"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Alta" />

@@ -207,13 +207,12 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         if (id == R.id.locate) {
             updateDroneLocation.execute();
             cameraUpdate(); // Locate the drone's place
-        } else if (id == R.id.add) {
+        } else if (id == R.id.add)
             addPath();
-        } else if (id == R.id.config) {
+        else if (id == R.id.config)
             showSettingDialog();
-        } else if (id == R.id.run) {
+        else if (id == R.id.run)
             runMission();
-        }
     }
 
     private void initUI() {
@@ -226,9 +225,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                     return;
                 switch (adding) {
                     case 1:
-                        if (aoi.deleteInitialPoint(markerSelected)) {
+                        if (aoi.deleteInitialPoint(markerSelected))
                             aoi.setInitialPath();
-                        }
                         break;
                     case 2:
                         if (aoi.deleteVertex(markerSelected)) {
@@ -330,9 +328,9 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             return;
         if (mission.setPathWaypoint(aoi.getPathPoint())) {
             DJIError error = mission.loadMission(mFinishedAction, mSpeed);
-            if (error == null) {
+            if (error == null)
                 showToast("Missão carregada com sucesso");
-            } else
+            else
                 showToast("Falha em carregar a missão, erro: " + error.getDescription());
         }
     }
@@ -353,9 +351,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             if (error == null) {
                 mission.startMission(startMission);
                 showToast("Upload da missão com sucesso!");
-            } else {
+            } else
                 showToast("Falha no upload da missão, erro: " + error.getDescription() + ", tente novamente...");
-            }
         }
     });
 
@@ -420,56 +417,89 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         LinearLayout wayPointSettings = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_waypointsetting, null);
         RadioGroup speed_RG = wayPointSettings.findViewById(R.id.speed);
         RadioGroup actionAfterFinished_RG = wayPointSettings.findViewById(R.id.actionAfterFinished);
-        RadioGroup photo_RG = wayPointSettings.findViewById(R.id.takePhoto);
         RadioGroup algorithm_RG = wayPointSettings.findViewById(R.id.algorithm);
+        RadioGroup photo_RG = wayPointSettings.findViewById(R.id.takePhoto);
+
+        // Definir opção de velocidade com base no valor de mSpeed
+        if (mSpeed == 2.0f)
+            speed_RG.check(R.id.lowSpeed);
+        else if (mSpeed == 4.0f)
+            speed_RG.check(R.id.midSpeed);
+        else if (mSpeed == 8.0f)
+            speed_RG.check(R.id.highSpeed);
+
+        // Definir opção de ação após finalizar com base no valor de mFinishedAction
+        switch (mFinishedAction) {
+            case 0:
+                actionAfterFinished_RG.check(R.id.finishNone);
+                break;
+            case 1:
+                actionAfterFinished_RG.check(R.id.finishGoHome);
+                break;
+            case 2:
+                actionAfterFinished_RG.check(R.id.finishAutoLanding);
+                break;
+            case 3:
+                actionAfterFinished_RG.check(R.id.finishToFirst);
+                break;
+        }
+
+        // Definir opção de algoritmo com base no valor de algorithm
+        switch (algorithm) {
+            case 0:
+                algorithm_RG.check(R.id.bcd);
+                break;
+            case 1:
+                algorithm_RG.check(R.id.stc);
+                break;
+        }
+
+        // Definir opção de tirar foto com base no valor de mission.isTakePhoto()
+        photo_RG.check(mission.isTakePhoto() ? R.id.yes : R.id.no);
 
         speed_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (checkedId == R.id.lowSpeed) {
+                if (checkedId == R.id.lowSpeed)
                     mSpeed = 2.0f;
-                } else if (checkedId == R.id.MidSpeed) {
+                else if (checkedId == R.id.midSpeed)
                     mSpeed = 4.0f;
-                } else if (checkedId == R.id.HighSpeed) {
+                else if (checkedId == R.id.highSpeed)
                     mSpeed = 8.0f;
-                }
             }
         });
 
         actionAfterFinished_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (checkedId == R.id.finishNone) {
+                if (checkedId == R.id.finishNone)
                     mFinishedAction = 0;
-                } else if (checkedId == R.id.finishGoHome) {
+                else if (checkedId == R.id.finishGoHome)
                     mFinishedAction = 1;
-                } else if (checkedId == R.id.finishAutoLanding) {
+                else if (checkedId == R.id.finishAutoLanding)
                     mFinishedAction = 2;
-                } else if (checkedId == R.id.finishToFirst) {
+                else if (checkedId == R.id.finishToFirst)
                     mFinishedAction = 3;
-                }
-            }
-        });
-
-        photo_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (checkedId == R.id.yes) {
-                    mission.setTakePhoto(true);
-                } else if (checkedId == R.id.no) {
-                    mission.setTakePhoto(false);
-                }
             }
         });
 
         algorithm_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (checkedId == R.id.bcd) {
+                if (checkedId == R.id.bcd)
                     algorithm = 0;
-                } else if (checkedId == R.id.stc) {
+                else if (checkedId == R.id.stc)
                     algorithm = 1;
-                }
+            }
+        });
+
+        photo_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                if (checkedId == R.id.yes)
+                    mission.setTakePhoto(true);
+                else if (checkedId == R.id.no)
+                    mission.setTakePhoto(false);
             }
         });
 

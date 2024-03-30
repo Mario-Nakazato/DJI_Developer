@@ -173,4 +173,8 @@ public class MissionOperatorDJI {
     void setTakePhoto(boolean takePhoto) {
         this.takePhoto = takePhoto;
     }
+
+    boolean isTakePhoto() {
+        return takePhoto;
+    }
 }
