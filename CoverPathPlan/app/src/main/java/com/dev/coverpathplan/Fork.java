@@ -33,40 +33,39 @@ public class Fork {
         GraphStructure gs = new GraphStructure();
         Graph<Node, DefaultWeightedEdge> g = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 
-        for (List<Node> cell : cells) {
+        for (List<Node> cell : cells)
             for (Node c : cell) {
+                gs.nodes.add(c);
                 g.addVertex(c);
             }
-        }
 
         int n = cells.size();
         for (int i1 = 0; i1 < n; i1++) {
             for (int i2 = 0; i2 < cells.get(i1).size(); i2++) {
                 if (i1 < n - 1) {
                     g.addEdge(cells.get(i1).get(i2), cells.get(i1 + 1).get(i2));
-                    g.setEdgeWeight(g.getEdge(cells.get(i1).get(i2), cells.get(i1 + 1).get(i2)), 2);
+                    g.setEdgeWeight(g.getEdge(cells.get(i1).get(i2), cells.get(i1 + 1).get(i2)), 2.0f);
                 }
                 if (i2 < cells.get(i1).size() - 1) {
                     g.addEdge(cells.get(i1).get(i2), cells.get(i1).get(i2 + 1));
-                    g.setEdgeWeight(g.getEdge(cells.get(i1).get(i2), cells.get(i1).get(i2 + 1)), 1);
+                    g.setEdgeWeight(g.getEdge(cells.get(i1).get(i2), cells.get(i1).get(i2 + 1)), 1.0f);
                 }
             }
         }
 
         for (LatLng cell : cellsRemove) {
             Node nodeToRemove = null;
-            for (Node node : g.vertexSet()) {
+            for (Node node : g.vertexSet())
                 if (node.node.equals(cell)) {
                     nodeToRemove = node;
                     break;
                 }
-            }
+
             if (nodeToRemove != null) {
+                gs.nodes.remove(nodeToRemove);
                 g.removeVertex(nodeToRemove);
             }
         }
-
-        gs.nodes.addAll(g.vertexSet());
 
         for (DefaultWeightedEdge edge : g.edgeSet()) {
             Node sourceLatLng = g.getEdgeSource(edge);
@@ -76,7 +75,6 @@ public class Fork {
             gs.arcs.add(targetLatLng);
             gs.weight.add(weight);
         }
-
         return gs;
     }
 
@@ -87,9 +85,8 @@ public class Fork {
         GraphStructure gs = new GraphStructure();
         Graph<Node, DefaultWeightedEdge> g = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 
-        for (Node node : graphStructure.nodes) {
+        for (Node node : graphStructure.nodes)
             g.addVertex(node);
-        }
 
         for (int i = 0; i < graphStructure.arcs.size() - 1; i += 2) {
             Node sourceLatLng = graphStructure.arcs.get(i);
@@ -104,7 +101,7 @@ public class Fork {
         Graph<Node, DefaultWeightedEdge> gPrim = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
         Graphs.addAllEdges(gPrim, g, minimumSpanningTree.getEdges());
 
-        gs.nodes.addAll(gPrim.vertexSet());
+        gs.nodes.addAll(graphStructure.nodes);
 
         for (DefaultWeightedEdge edge : gPrim.edgeSet()) {
             Node sourceLatLng = gPrim.getEdgeSource(edge);
@@ -113,11 +110,13 @@ public class Fork {
             gs.arcs.add(targetLatLng);
             gs.weight.add(gPrim.getEdgeWeight(edge));
         }
-
         return gs;
     }
 
     GraphStructure pathGraph(GraphStructure graphStructure) {
+        if (graphStructure.nodes.isEmpty())
+            return graphStructure;
+
         GraphStructure gs = new GraphStructure();
         Graph<LatLng, DefaultWeightedEdge> g = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 
@@ -134,16 +133,20 @@ public class Fork {
                 if (currentCol < rows - 1) {
                     LatLng rightNode = node.cells.get(i + 1);
                     g.addEdge(currentNode, rightNode);
-                    g.setEdgeWeight(g.getEdge(currentNode, rightNode), 2);
+                    g.setEdgeWeight(g.getEdge(currentNode, rightNode), 2.0f);
                 }
 
                 if (currentRow < rows - 1) {
                     LatLng bottomNode = node.cells.get(i + rows);
                     g.addEdge(currentNode, bottomNode);
-                    g.setEdgeWeight(g.getEdge(currentNode, bottomNode), 1);
+                    g.setEdgeWeight(g.getEdge(currentNode, bottomNode), 1.0f);
                 }
             }
         }
+
+        LatLng startLatLng = graphStructure.nodes.get(0).cells.get(2);
+        LatLng finishLatLng = graphStructure.nodes.get(0).cells.get(0);
+        g.removeEdge(startLatLng, finishLatLng);
 
         for (int i = 0; i < graphStructure.arcs.size() - 1; i += 2) {
             Node sourceLatLng = graphStructure.arcs.get(i);
@@ -186,20 +189,13 @@ public class Fork {
             g.setEdgeWeight(g.getEdge(closestCellSource2, closestCellTarget2), graphStructure.weight.get(i / 2));
         }
 
-        for (DefaultWeightedEdge edge : g.edgeSet()) {
-            LatLng sourceLatLng = g.getEdgeSource(edge);
-            LatLng targetLatLng = g.getEdgeTarget(edge);
-            g.removeEdge(sourceLatLng, targetLatLng);
+        DijkstraShortestPath<LatLng, DefaultWeightedEdge> dijkstraAlg = new DijkstraShortestPath<>(g);
+        GraphPath<LatLng, DefaultWeightedEdge> shortestPath = dijkstraAlg.getPath(startLatLng, finishLatLng);
 
-            DijkstraShortestPath<LatLng, DefaultWeightedEdge> dijkstraAlg = new DijkstraShortestPath<>(g);
-            GraphPath<LatLng, DefaultWeightedEdge> shortestPath = dijkstraAlg.getPath(sourceLatLng, targetLatLng);
-
-            for (LatLng latLng : shortestPath.getVertexList()) {
-                Node node = new Node();
-                node.node = latLng;
-                gs.nodes.add(node);
-            }
-            break;
+        for (LatLng latLng : shortestPath.getVertexList()) {
+            Node node = new Node();
+            node.node = latLng;
+            gs.nodes.add(node);
         }
 
         for (DefaultWeightedEdge edge : g.edgeSet()) {
@@ -216,7 +212,6 @@ public class Fork {
             gs.arcs.add(targetNode);
             gs.weight.add(weight);
         }
-
         return gs;
     }
 }
