@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dji.common.error.DJIError;
+import dji.common.mission.waypoint.WaypointMissionExecuteState;
+import dji.common.mission.waypoint.WaypointMissionExecutionEvent;
 
 @SuppressLint("SetTextI18n")
 @SuppressWarnings({"FieldCanBeLocal", "Convert2Lambda"})
@@ -51,6 +53,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private GeoCalcGeodeticUtils gcgu;
     private FlightControllerDJI dji;
     private MissionOperatorDJI mission;
+    private MissionOperatorDJICallback missionCallback;
     private Fork graph;
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
@@ -88,6 +91,79 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         dji = new FlightControllerDJI();
         mission = new MissionOperatorDJI();
         graph = new Fork();
+        missionCallback = new MissionOperatorDJICallback() {
+            @Override
+            public void uploadMission(DJIError error) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (error == null) {
+                            mission.startMission();
+                            showToast("Upload da missão com sucesso!");
+                        } else
+                            showToast("Falha no upload da missão, tente novamente... Erro: " + error.getDescription());
+                    }
+                });
+            }
+
+            @Override
+            public void startMission(DJIError error) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        bRun.setText("Parar");
+                        showToast("Missão iniciada" + (error == null ? " com sucesso" : ", erro: " + error.getDescription()));
+                    }
+                });
+            }
+
+            @Override
+            public void stopMission(DJIError error) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        bRun.setText("Iniciar");
+                        showToast("Missão interrompida" + (error == null ? " com sucesso" : ", erro: " + error.getDescription()));
+                    }
+                });
+            }
+
+            boolean runOnce = false;
+            @Override
+            public void onExecutionUpdate(WaypointMissionExecutionEvent executionEvent) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        assert executionEvent.getProgress() != null;
+                        int i = executionEvent.getProgress().targetWaypointIndex;
+
+                        if (!runOnce && i == 0
+                                && bRun.getText().equals("Parar")
+                                && executionEvent.getProgress().executeState == WaypointMissionExecuteState.BEGIN_ACTION) {
+                            runOnce = true;
+                            showToast("Caminho de cobertura iniciado ");
+                        } else if (runOnce && i == executionEvent.getProgress().totalWaypointCount - 1
+                                && bRun.getText().equals("Parar")
+                                && executionEvent.getProgress().executeState == WaypointMissionExecuteState.FINISHED_ACTION) {
+                            runOnce = false;
+                            showToast("Caminho de cobertura finalizado ");
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onExecutionFinish(DJIError error) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (bRun.getText().equals("Parar"))
+                            showToast("Missão concluída" + (error == null ? " com sucesso!" : ", erro: " + error.getDescription()));
+                        bRun.setText("Iniciar");
+                    }
+                });
+            }
+        };
     }
 
     @SuppressLint("MissingPermission")
@@ -331,54 +407,19 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             if (error == null)
                 showToast("Missão carregada com sucesso");
             else
-                showToast("Falha em carregar a missão, erro: " + error.getDescription());
+                showToast("Falha em carregar a missão, tente novamente... Erro: " + error.getDescription());
         }
     }
 
     private void runMission() {
         if (bAdd.getText().equals("Caminho"))
             if (bRun.getText().equals("Iniciar"))
-                mission.uploadMission(uploadMission);
+                mission.uploadMission();
             else
-                mission.stopMission(stopMission);
+                mission.stopMission();
         else
             showToast("Termine de definir o caminho antes de iniciar a missão");
     }
-
-    ErrorCallback uploadMission = (DJIError error) -> runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-            if (error == null) {
-                mission.startMission(startMission);
-                showToast("Upload da missão com sucesso!");
-            } else
-                showToast("Falha no upload da missão, erro: " + error.getDescription() + ", tente novamente...");
-        }
-    });
-
-    ErrorCallback startMission = (DJIError error) -> runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-            bRun.setText("Parar");
-            showToast("Missão iniciada" + (error == null ? " com sucesso" : ", erro: " + error.getDescription()));
-        }
-    });
-
-    ErrorCallback stopMission = (DJIError error) -> runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-            bRun.setText("Iniciar");
-            showToast("Missão interrompida" + (error == null ? " com sucesso" : ", erro: " + error.getDescription()));
-        }
-    });
-
-    ErrorCallback finishMission = (DJIError error) -> runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-            bRun.setText("Iniciar");
-            showToast("Missão concluída" + (error == null ? " com sucesso!" : ", erro: " + error.getDescription()));
-        }
-    });
 
     private void cameraUpdate() {
         LatLng latlng = dji.getLocation();
@@ -525,7 +566,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private boolean onProductConnectionChange() {
         boolean isConnected = dji.setProduct(MainActivity.getProductInstance(), isSimulating, updateDroneLocation);
         if (isConnected)
-            mission.setMissionOperator(MainActivity.getMissionOperatorInstance(), finishMission);
+            mission.setMissionOperator(MainActivity.getMissionOperatorInstance(), missionCallback);
         return isConnected;
     }
 

@@ -23,20 +23,22 @@ import dji.common.util.CommonCallbacks;
 import dji.sdk.mission.waypoint.WaypointMissionOperator;
 import dji.sdk.mission.waypoint.WaypointMissionOperatorListener;
 
-interface ErrorCallback {
-    void execute(DJIError error);
+interface MissionOperatorDJICallback {
+    void uploadMission (DJIError error);
+    void startMission(DJIError error);
+    void stopMission(DJIError error);
+    void onExecutionUpdate(WaypointMissionExecutionEvent executionEvent);
+    void onExecutionFinish(DJIError error);
 }
 
 @SuppressWarnings("Convert2Lambda")
 public class MissionOperatorDJI {
     private WaypointMissionOperator missionOperator;
+    private WaypointMissionOperatorListener eventNotificationListener;
+    private MissionOperatorDJICallback callback;
     private WaypointMission.Builder waypointMissionBuilder;
     private List<Waypoint> pathWaypoint;
-    private float mSpeed = 4.0f;
-    private WaypointMissionFinishedAction mFinishedAction = WaypointMissionFinishedAction.GO_HOME;
-    private WaypointMissionHeadingMode mHeadingMode = WaypointMissionHeadingMode.USING_INITIAL_DIRECTION;
-    private WaypointMissionOperatorListener eventNotificationListener;
-    WaypointAction actionPhoto, actionRotate, actionStay;
+    private WaypointAction actionPhoto, actionRotate, actionStay;
     private boolean takePhoto = false;
 
     MissionOperatorDJI() {
@@ -46,8 +48,10 @@ public class MissionOperatorDJI {
         actionStay = new WaypointAction(WaypointActionType.STAY, 1);
     }
 
-    boolean setMissionOperator(WaypointMissionOperator WaypointMissionOperator, ErrorCallback callback) {
+    boolean setMissionOperator(WaypointMissionOperator WaypointMissionOperator, MissionOperatorDJICallback missionOperatorDJICallback) {
         missionOperator = WaypointMissionOperator;
+        callback = missionOperatorDJICallback;
+
         if (missionOperator != null) {
             eventNotificationListener = new WaypointMissionOperatorListener() {
                 @Override
@@ -60,6 +64,7 @@ public class MissionOperatorDJI {
 
                 @Override
                 public void onExecutionUpdate(@NonNull WaypointMissionExecutionEvent executionEvent) {
+                    callback.onExecutionUpdate(executionEvent);
                 }
 
                 @Override
@@ -68,7 +73,7 @@ public class MissionOperatorDJI {
 
                 @Override
                 public void onExecutionFinish(@Nullable final DJIError error) {
-                    callback.execute(error);
+                    callback.onExecutionFinish(error);
                 }
             };
             missionOperator.addListener(eventNotificationListener);
@@ -112,8 +117,9 @@ public class MissionOperatorDJI {
     DJIError loadMission(int finishedAction, float speed) {
         if (missionOperator == null || pathWaypoint.isEmpty())
             return null;
-        mSpeed = speed;
 
+        WaypointMissionHeadingMode mHeadingMode = WaypointMissionHeadingMode.USING_INITIAL_DIRECTION;
+        WaypointMissionFinishedAction mFinishedAction;
         switch (finishedAction) {
             case 0:
                 mFinishedAction = WaypointMissionFinishedAction.NO_ACTION;
@@ -132,40 +138,46 @@ public class MissionOperatorDJI {
         }
         waypointMissionBuilder.finishedAction(mFinishedAction)
                 .headingMode(mHeadingMode)
-                .autoFlightSpeed(mSpeed)
-                .maxFlightSpeed(mSpeed)
+                .autoFlightSpeed(speed)
+                .maxFlightSpeed(speed)
                 .flightPathMode(WaypointMissionFlightPathMode.NORMAL);
         return missionOperator.loadMission(waypointMissionBuilder.build());
     }
 
-    void uploadMission(ErrorCallback callback) {
+    void uploadMission() {
         if (missionOperator != null)
             missionOperator.uploadMission(new CommonCallbacks.CompletionCallback<DJIError>() {
+                DJIError e;
                 @Override
                 public void onResult(DJIError error) {
-                    callback.execute(error);
                     if (error != null)
-                        missionOperator.retryUploadMission(null);
+                        missionOperator.retryUploadMission(new CommonCallbacks.CompletionCallback<DJIError>() {
+                            @Override
+                            public void onResult(DJIError error) {
+                                e = error;
+                            }
+                        });
+                    callback.uploadMission(e);
                 }
             });
     }
 
-    void startMission(ErrorCallback callback) {
+    void startMission() {
         if (missionOperator != null)
             missionOperator.startMission(new CommonCallbacks.CompletionCallback<DJIError>() {
                 @Override
                 public void onResult(DJIError error) {
-                    callback.execute(error);
+                    callback.startMission(error);
                 }
             });
     }
 
-    void stopMission(ErrorCallback callback) {
+    void stopMission() {
         if (missionOperator != null)
             missionOperator.stopMission(new CommonCallbacks.CompletionCallback<DJIError>() {
                 @Override
                 public void onResult(DJIError error) {
-                    callback.execute(error);
+                    callback.stopMission(error);
                 }
             });
     }
