@@ -9,13 +9,15 @@ public class CaptureArea {
     private static double imagemAltura = 3000; // px
     private static double sensorLargura = 6.17; // mm
     private static double sensorAltura = 4.55; // mm
+    private static double sensorImagemLargura = 4000; // px
+    private static double sensorImagemAltura = 3000; // px
     private static double fatorCorte = 5.64;
     private static double equivante35mm = 26; // mm
     private static double distanciaFocal = equivante35mm / fatorCorte; // mm
-    private static double footprintLargura = altitude * sensorLargura / distanciaFocal; // m
+    private static double footprintLargura = altitude * (sensorLargura * imagemLargura / sensorImagemLargura) / distanciaFocal; // m
     private static double gsdLargura = footprintLargura / imagemLargura; // m/px
     private static double gsdLarguraCm = gsdLargura * 100; // cm/px
-    private static double footprintAltura = altitude * sensorAltura / distanciaFocal; // m
+    private static double footprintAltura = altitude * (sensorAltura * imagemAltura / sensorImagemAltura) / distanciaFocal; // m
     private static double gsdAltura = footprintAltura / imagemAltura; // m/px
     private static double gsdAlturaCm = gsdAltura * 100; // cm/px
     private static double overlapLargura = 0.6; // %
@@ -41,6 +43,14 @@ public class CaptureArea {
         return sensorAltura;
     }
 
+    static double getSensorImagemLargura() {
+        return sensorImagemLargura;
+    }
+
+    static double getSensorImagemAltura() {
+        return sensorImagemAltura;
+    }
+
     static double getFatorCorte() {
         return fatorCorte;
     }
@@ -61,14 +71,14 @@ public class CaptureArea {
         if (imgLar < 0)
             return;
         imagemLargura = imgLar;
-        calcGsdLargura();
+        calcFootprintLargura();
     }
 
     static void setImagemAltura(double imgAlt) {
         if (imgAlt < 0)
             return;
         imagemAltura = imgAlt;
-        calcGsdAltura();
+        calcFootprintAltura();
     }
 
     static void setSensorLargura(double sensorLar) {
@@ -82,6 +92,20 @@ public class CaptureArea {
         if (sensorAlt < 0)
             return;
         sensorAltura = sensorAlt;
+        calcFootprintAltura();
+    }
+
+    static void setSensorImagemLargura(double sensorImagemLar) {
+        if (sensorImagemLar < 0)
+            return;
+        sensorImagemLargura = sensorImagemLar;
+        calcFootprintLargura();
+    }
+
+    static void setSensorImagemAltura(double sensorImagemAlt) {
+        if (sensorImagemAlt < 0)
+            return;
+        sensorImagemAltura = sensorImagemAlt;
         calcFootprintAltura();
     }
 
@@ -127,11 +151,11 @@ public class CaptureArea {
         if (footprintLar < 0)
             return;
         footprintLargura = footprintLar;
-        setAltitude(sensorLargura != 0 ? footprintLargura * distanciaFocal / sensorLargura : 0);
+        setAltitude(sensorLargura != 0 ? footprintLargura * distanciaFocal / (sensorLargura * imagemLargura / sensorImagemLargura) : 0);
     }
 
     private static void calcFootprintLargura() {
-        footprintLargura = distanciaFocal != 0 ? altitude * sensorLargura / distanciaFocal : 0;
+        footprintLargura = distanciaFocal != 0 ? altitude * (sensorLargura * imagemLargura / sensorImagemLargura) / distanciaFocal : 0;
         calcGsdLargura();
     }
 
@@ -174,11 +198,11 @@ public class CaptureArea {
         if (footprintAlt < 0)
             return;
         footprintAltura = footprintAlt;
-        setAltitude(sensorAltura != 0 ? footprintAltura * distanciaFocal / sensorAltura : 0);
+        setAltitude(sensorAltura != 0 ? footprintAltura * distanciaFocal / (sensorAltura * imagemAltura / sensorImagemAltura) : 0);
     }
 
     private static void calcFootprintAltura() {
-        footprintAltura = distanciaFocal != 0 ? altitude * sensorAltura / distanciaFocal : 0;
+        footprintAltura = distanciaFocal != 0 ? altitude * (sensorAltura * imagemAltura / sensorImagemAltura) / distanciaFocal : 0;
         calcGsdAltura();
     }
 
@@ -245,6 +269,8 @@ public class CaptureArea {
         Log.v("GSD", "Imagem Altura: " + imagemAltura + " px");
         Log.v("GSD", "Sensor Largura: " + sensorLargura + " mm");
         Log.v("GSD", "Sensor Altura: " + sensorAltura + " mm");
+        Log.v("GSD", "Sensor Imagem Largura: " + sensorImagemLargura + " px");
+        Log.v("GSD", "Sensor Imagem Altura: " + sensorImagemAltura + " px");
         Log.v("GSD", "Fator de Corte: " + fatorCorte);
         Log.v("GSD", "Equivalente 35mm: " + equivante35mm + "mm");
         Log.v("GSD", "Distância Focal: " + distanciaFocal + " mm");

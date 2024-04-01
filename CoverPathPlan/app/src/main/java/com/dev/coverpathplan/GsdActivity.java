@@ -11,7 +11,7 @@ public class GsdActivity extends AppCompatActivity {
 
     private TextView textAltitude, textGsdLarCm, textGsdAltCm, textGsdLar, textGsdAlt,
             textFootprintLar, textFootprintAlt, textImgLar, textImgAlt,
-            textSensorLar, textSensorAlt, textFatorCorte, textE35mm, textDistanciaFocal,
+            textSensorLar, textSensorImgLar, textSensorAlt, textSensorImgAlt, textFatorCorte, textE35mm, textDistanciaFocal,
             textOverlapLar, textOverlapAlt;
 
     @Override
@@ -40,7 +40,9 @@ public class GsdActivity extends AppCompatActivity {
         textImgLar = findViewById(R.id.imgLar);
         textImgAlt = findViewById(R.id.imgAlt);
         textSensorLar = findViewById(R.id.sensorLar);
+        textSensorImgLar = findViewById(R.id.sensorImgLar);
         textSensorAlt = findViewById(R.id.sensorAlt);
+        textSensorImgAlt = findViewById(R.id.sensorImgAlt);
         textFatorCorte = findViewById(R.id.fatorCorte);
         textE35mm = findViewById(R.id.e35mm);
         textDistanciaFocal = findViewById(R.id.distanciaFocal);
@@ -60,7 +62,9 @@ public class GsdActivity extends AppCompatActivity {
         if (textImgLar != excludedTextView) textImgLar.setText(String.valueOf(CaptureArea.getImagemLargura()));
         if (textImgAlt != excludedTextView) textImgAlt.setText(String.valueOf(CaptureArea.getImagemAltura()));
         if (textSensorLar != excludedTextView) textSensorLar.setText(String.valueOf(CaptureArea.getSensorLargura()));
+        if (textSensorImgLar != excludedTextView) textSensorImgLar.setText(String.valueOf(CaptureArea.getSensorImagemLargura()));
         if (textSensorAlt != excludedTextView) textSensorAlt.setText(String.valueOf(CaptureArea.getSensorAltura()));
+        if (textSensorImgAlt != excludedTextView) textSensorImgAlt.setText(String.valueOf(CaptureArea.getSensorImagemAltura()));
         if (textFatorCorte != excludedTextView) textFatorCorte.setText(String.valueOf(CaptureArea.getFatorCorte()));
         if (textE35mm != excludedTextView) textE35mm.setText(String.valueOf(CaptureArea.getEquivante35mm()));
         if (textDistanciaFocal != excludedTextView) textDistanciaFocal.setText(String.valueOf(CaptureArea.getDistanciaFocal()));
@@ -79,7 +83,9 @@ public class GsdActivity extends AppCompatActivity {
         textImgLar.addTextChangedListener(createTextWatcher(textImgLar, CaptureArea::getImagemLargura, CaptureArea::setImagemLargura));
         textImgAlt.addTextChangedListener(createTextWatcher(textImgAlt, CaptureArea::getImagemAltura, CaptureArea::setImagemAltura));
         textSensorLar.addTextChangedListener(createTextWatcher(textSensorLar, CaptureArea::getSensorLargura, CaptureArea::setSensorLargura));
+        textSensorImgLar.addTextChangedListener(createTextWatcher(textSensorImgLar, CaptureArea::getSensorImagemLargura, CaptureArea::setSensorImagemLargura));
         textSensorAlt.addTextChangedListener(createTextWatcher(textSensorAlt, CaptureArea::getSensorAltura, CaptureArea::setSensorAltura));
+        textSensorImgAlt.addTextChangedListener(createTextWatcher(textSensorImgAlt, CaptureArea::getSensorImagemAltura, CaptureArea::setSensorImagemAltura));
         textFatorCorte.addTextChangedListener(createTextWatcher(textFatorCorte, CaptureArea::getFatorCorte, CaptureArea::setFatorCorte));
         textE35mm.addTextChangedListener(createTextWatcher(textE35mm, CaptureArea::getEquivante35mm, CaptureArea::setEquivante35mm));
         textDistanciaFocal.addTextChangedListener(createTextWatcher(textDistanciaFocal, CaptureArea::getDistanciaFocal, CaptureArea::setDistanciaFocal));
