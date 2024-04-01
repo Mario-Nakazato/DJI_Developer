@@ -1,5 +1,7 @@
 package com.dev.coverpathplan;
 
+import static com.dev.coverpathplan.GeoCalcGeodeticUtils.calculateTotalDistance;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
@@ -18,6 +20,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.dev.coverpathplan.databinding.ActivityAoiBinding;
@@ -28,6 +31,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,6 +52,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private float mSpeed = 4.0f;
     private int mFinishedAction = 1;
     private int algorithm = 0;
+    private boolean isCovering = false;
     private AreaOfInterest aoi;
     private JTSGeometryUtils jtsgu;
     private GeoCalcGeodeticUtils gcgu;
@@ -98,7 +103,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                     @Override
                     public void run() {
                         if (error == null) {
-                            mission.startMission();
+                            showMetricsDialog();
                             showToast("Upload da missão com sucesso!");
                         } else
                             showToast("Falha no upload da missão, tente novamente... Erro: " + error.getDescription());
@@ -122,13 +127,12 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        bRun.setText("Iniciar");
+                        bRun.setText("Upload");
                         showToast("Missão interrompida" + (error == null ? " com sucesso" : ", erro: " + error.getDescription()));
                     }
                 });
             }
 
-            boolean runOnce = false;
             @Override
             public void onExecutionUpdate(WaypointMissionExecutionEvent executionEvent) {
                 runOnUiThread(new Runnable() {
@@ -137,15 +141,15 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                         assert executionEvent.getProgress() != null;
                         int i = executionEvent.getProgress().targetWaypointIndex;
 
-                        if (!runOnce && i == 0
+                        if (!isCovering && i == 0
                                 && bRun.getText().equals("Parar")
                                 && executionEvent.getProgress().executeState == WaypointMissionExecuteState.BEGIN_ACTION) {
-                            runOnce = true;
+                            isCovering = true;
                             showToast("Caminho de cobertura iniciado ");
-                        } else if (runOnce && i == executionEvent.getProgress().totalWaypointCount - 1
+                        } else if (isCovering && i == executionEvent.getProgress().totalWaypointCount - 1
                                 && bRun.getText().equals("Parar")
                                 && executionEvent.getProgress().executeState == WaypointMissionExecuteState.FINISHED_ACTION) {
-                            runOnce = false;
+                            isCovering = false;
                             showToast("Caminho de cobertura finalizado ");
                         }
                     }
@@ -159,7 +163,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                     public void run() {
                         if (bRun.getText().equals("Parar"))
                             showToast("Missão concluída" + (error == null ? " com sucesso!" : ", erro: " + error.getDescription()));
-                        bRun.setText("Iniciar");
+                        bRun.setText("Upload");
                     }
                 });
             }
@@ -286,7 +290,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         } else if (id == R.id.add)
             addPath();
         else if (id == R.id.config)
-            showSettingDialog();
+            if (bRun.getText().equals("Upload"))
+                showSettingDialog();
+            else
+                showToast("Missão em execução, não pode configurar opções");
         else if (id == R.id.run)
             runMission();
     }
@@ -330,8 +337,11 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         bGsd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(AoiActivity.this, GsdActivity.class);
-                startActivity(intent);
+                if (bRun.getText().equals("Upload")) {
+                    Intent intent = new Intent(AoiActivity.this, GsdActivity.class);
+                    startActivity(intent);
+                } else
+                    showToast("Missão em execução, não pode modificar GSD");
             }
         });
 
@@ -365,7 +375,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void addPath() {
-        if (bRun.getText().equals("Iniciar")) {
+        if (bRun.getText().equals("Upload")) {
             adding++;
             switch (adding) {
                 case 1:
@@ -413,12 +423,12 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private void runMission() {
         if (bAdd.getText().equals("Caminho"))
-            if (bRun.getText().equals("Iniciar"))
+            if (bRun.getText().equals("Upload"))
                 mission.uploadMission();
             else
                 mission.stopMission();
         else
-            showToast("Termine de definir o caminho antes de iniciar a missão");
+            showToast("Termine de definir o caminho antes do upload da missão");
     }
 
     private void cameraUpdate() {
@@ -455,11 +465,11 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void showSettingDialog() {
-        LinearLayout wayPointSettings = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_waypointsetting, null);
-        RadioGroup speed_RG = wayPointSettings.findViewById(R.id.speed);
-        RadioGroup actionAfterFinished_RG = wayPointSettings.findViewById(R.id.actionAfterFinished);
-        RadioGroup algorithm_RG = wayPointSettings.findViewById(R.id.algorithm);
-        RadioGroup photo_RG = wayPointSettings.findViewById(R.id.takePhoto);
+        LinearLayout settings = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_setting, null);
+        RadioGroup speed_RG = settings.findViewById(R.id.speed);
+        RadioGroup actionAfterFinished_RG = settings.findViewById(R.id.actionAfterFinished);
+        RadioGroup algorithm_RG = settings.findViewById(R.id.algorithm);
+        RadioGroup photo_RG = settings.findViewById(R.id.takePhoto);
 
         // Definir opção de velocidade com base no valor de mSpeed
         if (mSpeed == 2.0f)
@@ -546,11 +556,44 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
 
         new AlertDialog.Builder(this)
                 .setTitle("")
-                .setView(wayPointSettings)
+                .setView(settings)
                 .setPositiveButton("Finalizar", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         createPath();
                         loadPath();
+                    }
+
+                })
+                .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                })
+                .create()
+                .show();
+    }
+
+    private void showMetricsDialog() {
+        LinearLayout metrics = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_metrics, null);
+        TextView tPathDistance = metrics.findViewById(R.id.pathDistance);
+        TextView tPathDistanceDJI = metrics.findViewById(R.id.pathDistanceDJI);
+        TextView tEstimatedTimeDJI = metrics.findViewById(R.id.estimatedTimeDJI);
+        TextView tQuantityPhoto = metrics.findViewById(R.id.quantityPhoto);
+
+        DecimalFormat decimalFormatter = new DecimalFormat("0.00");
+
+        tPathDistance.setText("Distancia total do caminho: " + decimalFormatter.format(calculateTotalDistance(aoi.getGridPoints())) + " m");
+        tPathDistanceDJI.setText("Distancia total do caminho (DJI): " + decimalFormatter.format(mission.calculateTotalDistance()) + " m");
+        tEstimatedTimeDJI.setText("Tempo total (DJI): " + mission.calculateTotalTime().intValue() + " s");
+        // Tempo Estimado
+        tQuantityPhoto.setText("Quantidade de fotos: " + mission.getWaypointCount());
+
+        new AlertDialog.Builder(this)
+                .setTitle("")
+                .setView(metrics)
+                .setPositiveButton("Iniciar", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        mission.startMission();
                     }
 
                 })

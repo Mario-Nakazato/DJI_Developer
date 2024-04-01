@@ -28,6 +28,20 @@ public class GeoCalcGeodeticUtils {
         return EarthCalc.vincenty.distance(coor1, coor2);
     }
 
+    static double calculateTotalDistance(List<LatLng> values) {
+        double distance = 0;
+        LatLng value1;
+        LatLng value2 = null;
+
+        for (LatLng cell : values) {
+            value1 = cell;
+            if (value2 != null)
+                distance += calculateDistance(value1, value2);
+            value2 = value1;
+        }
+        return distance;
+    }
+
     List<LatLng> nodeToLatLng(List<Node> nodes) {
         List<LatLng> nodeToLatLng = new ArrayList<>();
         for (Node node : nodes)

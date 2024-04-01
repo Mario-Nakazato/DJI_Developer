@@ -24,10 +24,14 @@ import dji.sdk.mission.waypoint.WaypointMissionOperator;
 import dji.sdk.mission.waypoint.WaypointMissionOperatorListener;
 
 interface MissionOperatorDJICallback {
-    void uploadMission (DJIError error);
+    void uploadMission(DJIError error);
+
     void startMission(DJIError error);
+
     void stopMission(DJIError error);
+
     void onExecutionUpdate(WaypointMissionExecutionEvent executionEvent);
+
     void onExecutionFinish(DJIError error);
 }
 
@@ -148,6 +152,7 @@ public class MissionOperatorDJI {
         if (missionOperator != null)
             missionOperator.uploadMission(new CommonCallbacks.CompletionCallback<DJIError>() {
                 DJIError e;
+
                 @Override
                 public void onResult(DJIError error) {
                     if (error != null)
@@ -188,5 +193,17 @@ public class MissionOperatorDJI {
 
     boolean isTakePhoto() {
         return takePhoto;
+    }
+
+    float calculateTotalDistance() {
+        return waypointMissionBuilder.calculateTotalDistance();
+    }
+
+    Float calculateTotalTime() {
+        return waypointMissionBuilder.calculateTotalTime();
+    }
+
+    int getWaypointCount() {
+        return waypointMissionBuilder.getWaypointCount();
     }
 }

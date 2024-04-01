@@ -50,19 +50,19 @@
                         android:id="@+id/lowSpeed"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Baixa" />
+                        android:text="2 m/s" />
 
                     <RadioButton
                         android:id="@+id/midSpeed"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Média" />
+                        android:text="4 m/s" />
 
                     <RadioButton
                         android:id="@+id/highSpeed"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Alta" />
+                        android:text="8 m/s" />
                 </RadioGroup>
             </LinearLayout>
 
@@ -158,7 +158,7 @@
                         android:id="@+id/stc"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:text="Cobertura por Árvore Geradora" />
+                        android:text="Árvore Geradora" />
                 </RadioGroup>
             </LinearLayout>
 
