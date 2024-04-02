@@ -41,11 +41,15 @@ import dji.common.mission.waypoint.WaypointMissionExecutionEvent;
 
 @SuppressLint("SetTextI18n")
 @SuppressWarnings({"FieldCanBeLocal", "Convert2Lambda"})
-public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback, View.OnClickListener {
+public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback, View.OnClickListener, RadioGroup.OnCheckedChangeListener {
 
     private GoogleMap mMap;
     private ActivityAoiBinding binding;
     private Button bDelete, bGsd, bLocate, bAdd, bIsSimulating, bConfig, bRun;
+    private TextView tPathDistance, tPathDistanceDJI, tEstimatedTimeDJI, tQuantityPhoto;
+    private RadioGroup rgSpeed, rgActionAfterFinished, rgAlgorithm, rgPhoto;
+    private LinearLayout lSettings, lMetrics;
+    private AlertDialog adSetting, adMetrics;
     private Marker markerSelected;
     private int adding = 0;
     private boolean isSimulating = false;
@@ -53,6 +57,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private int mFinishedAction = 1;
     private int algorithm = 0;
     private boolean isCovering = false;
+    private DecimalFormat decimalFormatter = new DecimalFormat("0.00");
     private AreaOfInterest aoi;
     private JTSGeometryUtils jtsgu;
     private GeoCalcGeodeticUtils gcgu;
@@ -175,13 +180,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap; // Prefixo 'm' significa membro da classe
 
-        cameraUpdate();
         mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setMapToolbarEnabled(false);
-
-        // Inicializar
-        aoi = new AreaOfInterest(mMap);
+        cameraUpdate();
 
         googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
@@ -262,13 +264,15 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 return false;
             }
         });
+
+        // Inicializar
+        aoi = new AreaOfInterest(mMap);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         createPath();
-        loadPath();
         onProductConnectionChange();
     }
 
@@ -284,7 +288,50 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     public void onClick(View v) {
         int id = v.getId();
-        if (id == R.id.locate) {
+        if (id == R.id.delete) {
+            if (markerSelected == null)
+                return;
+
+            switch (adding) {
+                case 1:
+                    if (aoi.deleteInitialPoint(markerSelected))
+                        aoi.setInitialPath();
+                    break;
+                case 2:
+                    if (aoi.deleteVertex(markerSelected)) {
+                        aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
+                        aoi.setGrid(new ArrayList<>());
+                        aoi.setPathPlanning();
+                        if (algorithm == 1)
+                            aoi.guideMinimumSpanningTree(new ArrayList<>());
+                    }
+                    break;
+                case 3:
+                    if (aoi.deleteFinalPoint(markerSelected)) {
+                        aoi.setInitialPath();
+                        aoi.setFinalPath();
+                    }
+                    break;
+                default:
+            }
+            markerSelected = null;
+        } else if (id == R.id.simulate) {
+            isSimulating = !isSimulating;
+            if (isSimulating) {
+                bIsSimulating.setText("Controlar");
+                showToast("Simulador ligado");
+            } else {
+                bIsSimulating.setText("Simular");
+                showToast("Simulador desligado");
+            }
+            onProductConnectionChange();
+        } else if (id == R.id.gsd) {
+            if (bRun.getText().equals("Upload")) {
+                Intent intent = new Intent(AoiActivity.this, GsdActivity.class);
+                startActivity(intent);
+            } else
+                showToast("Missão em execução, não pode modificar GSD");
+        } else if (id == R.id.locate) {
             updateDroneLocation.execute();
             cameraUpdate(); // Locate the drone's place
         } else if (id == R.id.add)
@@ -298,80 +345,101 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             runMission();
     }
 
+    @Override
+    public void onCheckedChanged(RadioGroup group, int checkedId) {
+        int id = group.getId();
+        if (id == R.id.speed) {
+            if (checkedId == R.id.lowSpeed)
+                mSpeed = 2.0f;
+            else if (checkedId == R.id.midSpeed)
+                mSpeed = 4.0f;
+            else if (checkedId == R.id.highSpeed)
+                mSpeed = 8.0f;
+        } else if (id == R.id.actionAfterFinished) {
+            if (checkedId == R.id.finishNone)
+                mFinishedAction = 0;
+            else if (checkedId == R.id.finishGoHome)
+                mFinishedAction = 1;
+            else if (checkedId == R.id.finishAutoLanding)
+                mFinishedAction = 2;
+            else if (checkedId == R.id.finishToFirst)
+                mFinishedAction = 3;
+        } else if (id == R.id.algorithm) {
+            if (checkedId == R.id.bcd)
+                algorithm = 0;
+            else if (checkedId == R.id.stc)
+                algorithm = 1;
+        } else if (id == R.id.takePhoto) {
+            if (checkedId == R.id.yes)
+                mission.setTakePhoto(true);
+            else if (checkedId == R.id.no)
+                mission.setTakePhoto(false);
+        }
+    }
+
     private void initUI() {
         bDelete = findViewById(R.id.delete);
-
-        bDelete.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (markerSelected == null)
-                    return;
-                switch (adding) {
-                    case 1:
-                        if (aoi.deleteInitialPoint(markerSelected))
-                            aoi.setInitialPath();
-                        break;
-                    case 2:
-                        if (aoi.deleteVertex(markerSelected)) {
-                            aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
-                            aoi.setGrid(new ArrayList<>());
-                            aoi.setPathPlanning();
-                            if (algorithm == 1)
-                                aoi.guideMinimumSpanningTree(new ArrayList<>());
-                        }
-                        break;
-                    case 3:
-                        if (aoi.deleteFinalPoint(markerSelected)) {
-                            aoi.setInitialPath();
-                            aoi.setFinalPath();
-                        }
-                        break;
-                    default:
-                }
-                markerSelected = null;
-            }
-        });
-
         bGsd = findViewById(R.id.gsd);
-
-        bGsd.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (bRun.getText().equals("Upload")) {
-                    Intent intent = new Intent(AoiActivity.this, GsdActivity.class);
-                    startActivity(intent);
-                } else
-                    showToast("Missão em execução, não pode modificar GSD");
-            }
-        });
-
         bIsSimulating = findViewById(R.id.simulate);
-
-        bIsSimulating.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                isSimulating = !isSimulating;
-                if (isSimulating) {
-                    bIsSimulating.setText("Controlar");
-                    showToast("Simulador ligado");
-                } else {
-                    bIsSimulating.setText("Simular");
-                    showToast("Simulador desligado");
-                }
-                onProductConnectionChange();
-            }
-        });
-
         bLocate = findViewById(R.id.locate);
         bAdd = findViewById(R.id.add);
-
         bConfig = findViewById(R.id.config);
         bRun = findViewById(R.id.run);
-
+        bDelete.setOnClickListener(this);
+        bGsd.setOnClickListener(this);
+        bIsSimulating.setOnClickListener(this);
         bLocate.setOnClickListener(this);
         bAdd.setOnClickListener(this);
         bConfig.setOnClickListener(this);
         bRun.setOnClickListener(this);
+
+        lSettings = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_setting, null);
+        rgSpeed = lSettings.findViewById(R.id.speed);
+        rgActionAfterFinished = lSettings.findViewById(R.id.actionAfterFinished);
+        rgAlgorithm = lSettings.findViewById(R.id.algorithm);
+        rgPhoto = lSettings.findViewById(R.id.takePhoto);
+        rgSpeed.setOnCheckedChangeListener(this);
+        rgActionAfterFinished.setOnCheckedChangeListener(this);
+        rgAlgorithm.setOnCheckedChangeListener(this);
+        rgPhoto.setOnCheckedChangeListener(this);
+
+        adSetting = new AlertDialog.Builder(this)
+                .setTitle("")
+                .setView(lSettings)
+                .setPositiveButton("Finalizar", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        createPath();
+                    }
+
+                })
+                .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                })
+                .create();
+
+        lMetrics = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_metrics, null);
+        tPathDistance = lMetrics.findViewById(R.id.pathDistance);
+        tPathDistanceDJI = lMetrics.findViewById(R.id.pathDistanceDJI);
+        tEstimatedTimeDJI = lMetrics.findViewById(R.id.estimatedTimeDJI);
+        tQuantityPhoto = lMetrics.findViewById(R.id.quantityPhoto);
+
+        adMetrics = new AlertDialog.Builder(this)
+                .setTitle("")
+                .setView(lMetrics)
+                .setPositiveButton("Iniciar", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        mission.startMission();
+                    }
+
+                })
+                .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                })
+                .create();
     }
 
     private void addPath() {
@@ -402,37 +470,36 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 default:
                     adding = 0;
                     aoi.setDraggableFinal(false);
-                    loadPath();
                     bAdd.setText("Caminho");
             }
         } else
             showToast("Missão em execução, não pode definir caminhos");
     }
 
-    private void loadPath() {
-        if (aoi == null)
-            return;
-        if (mission.setPathWaypoint(aoi.getPathPoint())) {
-            DJIError error = mission.loadMission(mFinishedAction, mSpeed);
-            if (error == null)
-                showToast("Missão carregada com sucesso");
-            else
-                showToast("Falha em carregar a missão, tente novamente... Erro: " + error.getDescription());
-        }
-    }
-
     private void runMission() {
-        if (bAdd.getText().equals("Caminho"))
-            if (bRun.getText().equals("Upload"))
-                mission.uploadMission();
-            else
-                mission.stopMission();
-        else
+        if (!bAdd.getText().equals("Caminho")) {
             showToast("Termine de definir o caminho antes do upload da missão");
+            return;
+        }
+
+        if (bRun.getText().equals("Parar")) {
+            mission.stopMission();
+            return;
+        }
+
+        if (!mission.setPathWaypoint(aoi.getPathPoint()))
+            return;
+
+        DJIError error = mission.loadMission(mFinishedAction, mSpeed);
+        if (error == null) {
+            mission.uploadMission();
+            showToast("Missão carregada com sucesso");
+        } else
+            showToast("Falha em carregar a missão, tente novamente... Erro: " + error.getDescription());
     }
 
     private void cameraUpdate() {
-        LatLng latlng = dji.getLocation();
+        LatLng latlng = dji.getLocation(); // Melhoria?
 
         if (latlng == null)
             latlng = new LatLng(-23.1858535, -50.6574255);
@@ -465,145 +532,54 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void showSettingDialog() {
-        LinearLayout settings = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_setting, null);
-        RadioGroup speed_RG = settings.findViewById(R.id.speed);
-        RadioGroup actionAfterFinished_RG = settings.findViewById(R.id.actionAfterFinished);
-        RadioGroup algorithm_RG = settings.findViewById(R.id.algorithm);
-        RadioGroup photo_RG = settings.findViewById(R.id.takePhoto);
-
         // Definir opção de velocidade com base no valor de mSpeed
         if (mSpeed == 2.0f)
-            speed_RG.check(R.id.lowSpeed);
+            rgSpeed.check(R.id.lowSpeed);
         else if (mSpeed == 4.0f)
-            speed_RG.check(R.id.midSpeed);
+            rgSpeed.check(R.id.midSpeed);
         else if (mSpeed == 8.0f)
-            speed_RG.check(R.id.highSpeed);
+            rgSpeed.check(R.id.highSpeed);
 
         // Definir opção de ação após finalizar com base no valor de mFinishedAction
         switch (mFinishedAction) {
             case 0:
-                actionAfterFinished_RG.check(R.id.finishNone);
+                rgActionAfterFinished.check(R.id.finishNone);
                 break;
             case 1:
-                actionAfterFinished_RG.check(R.id.finishGoHome);
+                rgActionAfterFinished.check(R.id.finishGoHome);
                 break;
             case 2:
-                actionAfterFinished_RG.check(R.id.finishAutoLanding);
+                rgActionAfterFinished.check(R.id.finishAutoLanding);
                 break;
             case 3:
-                actionAfterFinished_RG.check(R.id.finishToFirst);
+                rgActionAfterFinished.check(R.id.finishToFirst);
                 break;
         }
 
         // Definir opção de algoritmo com base no valor de algorithm
         switch (algorithm) {
             case 0:
-                algorithm_RG.check(R.id.bcd);
+                rgAlgorithm.check(R.id.bcd);
                 break;
             case 1:
-                algorithm_RG.check(R.id.stc);
+                rgAlgorithm.check(R.id.stc);
                 break;
         }
 
         // Definir opção de tirar foto com base no valor de mission.isTakePhoto()
-        photo_RG.check(mission.isTakePhoto() ? R.id.yes : R.id.no);
+        rgPhoto.check(mission.isTakePhoto() ? R.id.yes : R.id.no);
 
-        speed_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (checkedId == R.id.lowSpeed)
-                    mSpeed = 2.0f;
-                else if (checkedId == R.id.midSpeed)
-                    mSpeed = 4.0f;
-                else if (checkedId == R.id.highSpeed)
-                    mSpeed = 8.0f;
-            }
-        });
-
-        actionAfterFinished_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (checkedId == R.id.finishNone)
-                    mFinishedAction = 0;
-                else if (checkedId == R.id.finishGoHome)
-                    mFinishedAction = 1;
-                else if (checkedId == R.id.finishAutoLanding)
-                    mFinishedAction = 2;
-                else if (checkedId == R.id.finishToFirst)
-                    mFinishedAction = 3;
-            }
-        });
-
-        algorithm_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (checkedId == R.id.bcd)
-                    algorithm = 0;
-                else if (checkedId == R.id.stc)
-                    algorithm = 1;
-            }
-        });
-
-        photo_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (checkedId == R.id.yes)
-                    mission.setTakePhoto(true);
-                else if (checkedId == R.id.no)
-                    mission.setTakePhoto(false);
-            }
-        });
-
-        new AlertDialog.Builder(this)
-                .setTitle("")
-                .setView(settings)
-                .setPositiveButton("Finalizar", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        createPath();
-                        loadPath();
-                    }
-
-                })
-                .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                    }
-                })
-                .create()
-                .show();
+        adSetting.show();
     }
 
     private void showMetricsDialog() {
-        LinearLayout metrics = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_metrics, null);
-        TextView tPathDistance = metrics.findViewById(R.id.pathDistance);
-        TextView tPathDistanceDJI = metrics.findViewById(R.id.pathDistanceDJI);
-        TextView tEstimatedTimeDJI = metrics.findViewById(R.id.estimatedTimeDJI);
-        TextView tQuantityPhoto = metrics.findViewById(R.id.quantityPhoto);
-
-        DecimalFormat decimalFormatter = new DecimalFormat("0.00");
-
         tPathDistance.setText("Distancia total do caminho: " + decimalFormatter.format(calculateTotalDistance(aoi.getGridPoints())) + " m");
         tPathDistanceDJI.setText("Distancia total do caminho (DJI): " + decimalFormatter.format(mission.calculateTotalDistance()) + " m");
         tEstimatedTimeDJI.setText("Tempo total (DJI): " + mission.calculateTotalTime().intValue() + " s");
         // Tempo Estimado
         tQuantityPhoto.setText("Quantidade de fotos: " + mission.getWaypointCount());
 
-        new AlertDialog.Builder(this)
-                .setTitle("")
-                .setView(metrics)
-                .setPositiveButton("Iniciar", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        mission.startMission();
-                    }
-
-                })
-                .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                    }
-                })
-                .create()
-                .show();
+        adMetrics.show();
     }
 
     private boolean onProductConnectionChange() {
