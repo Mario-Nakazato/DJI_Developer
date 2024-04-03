@@ -1,5 +1,8 @@
 package com.dev.coverpathplan;
 
+import static com.dev.coverpathplan.FlightState.calculateElapsedTime;
+import static com.dev.coverpathplan.FlightState.convertingDoubleToHoursMinutesSecondsMilliseconds;
+import static com.dev.coverpathplan.GeoCalcGeodeticUtils.calculateDistance;
 import static com.dev.coverpathplan.GeoCalcGeodeticUtils.calculateTotalDistance;
 
 import androidx.annotation.NonNull;
@@ -45,18 +48,20 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     private ActivityAoiBinding binding;
-    private Button bDelete, bGsd, bLocate, bAdd, bIsSimulating, bConfig, bRun;
-    private TextView tPathDistance, tPathDistanceDJI, tEstimatedTimeDJI, tQuantityPhoto;
+    private Button bDelete, bGsd, bLocate, bAdd, bIsSimulating, bConfig, bRun, bStatus;
+    private TextView tPathDistance, tPathDistanceDJI, tEstimatedTime, tEstimatedTimeDJI, tQuantityPhoto,
+            tDistanceTraveled, tInitialDateTime, tCurrentDateTime, tFinalDateTime, tElapsedTime;
     private RadioGroup rgSpeed, rgActionAfterFinished, rgAlgorithm, rgPhoto;
-    private LinearLayout lSettings, lMetrics;
-    private AlertDialog adSetting, adMetrics;
+    private LinearLayout lSettings, lMetrics, lStatus;
+    private AlertDialog adSetting, adMetrics, adStatus;
     private Marker markerSelected;
-    private int adding = 0;
-    private boolean isSimulating = false;
+    private int adding = 0, mFinishedAction = 1, algorithm = 0, quantityPhoto;
+    private boolean isSimulating = false, isCovering = false;
     private float mSpeed = 4.0f;
-    private int mFinishedAction = 1;
-    private int algorithm = 0;
-    private boolean isCovering = false;
+    private double distanceTraveled = 0, pathDistance, pathDistanceDJI;
+    private String estimatedTime, estimatedTimeDJI, initialDateTime = "dd/MM/yyyy HH:mm:ss.SSS",
+            currentDateTime = "dd/MM/yyyy HH:mm:ss.SSS", finalDateTime = "dd/MM/yyyy HH:mm:ss.SSS",
+            elapsedTime = "HH:mm:ss.SSS";
     private DecimalFormat decimalFormatter = new DecimalFormat("0.00");
     private AreaOfInterest aoi;
     private JTSGeometryUtils jtsgu;
@@ -65,6 +70,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private MissionOperatorDJI mission;
     private MissionOperatorDJICallback missionCallback;
     private Fork graph;
+    private FlightState vant;
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -101,6 +107,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         dji = new FlightControllerDJI();
         mission = new MissionOperatorDJI();
         graph = new Fork();
+        vant = new FlightState();
         missionCallback = new MissionOperatorDJICallback() {
             @Override
             public void uploadMission(DJIError error) {
@@ -121,7 +128,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        bRun.setText("Parar");
+                        bRun.setText(error == null ? "Parar" : "Upload");
                         showToast("Missão iniciada" + (error == null ? " com sucesso" : ", erro: " + error.getDescription()));
                     }
                 });
@@ -150,6 +157,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                                 && bRun.getText().equals("Parar")
                                 && executionEvent.getProgress().executeState == WaypointMissionExecuteState.BEGIN_ACTION) {
                             isCovering = true;
+                            initialDateTime = "dd/MM/yyyy HH:mm:ss.SSS";
+                            distanceTraveled = 0;
                             showToast("Caminho de cobertura iniciado ");
                         } else if (isCovering && i == executionEvent.getProgress().totalWaypointCount - 1
                                 && bRun.getText().equals("Parar")
@@ -317,6 +326,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             }
             markerSelected = null;
         } else if (id == R.id.simulate) {
+            if (vant.areMotorsOn)
+                return;
             isSimulating = !isSimulating;
             if (isSimulating) {
                 bIsSimulating.setText("Controlar");
@@ -333,7 +344,6 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             } else
                 showToast("Missão em execução, não pode modificar GSD");
         } else if (id == R.id.locate) {
-            updateDroneLocation.execute();
             cameraUpdate(); // Locate the drone's place
         } else if (id == R.id.add)
             addPath();
@@ -344,6 +354,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 showToast("Missão em execução, não pode configurar opções");
         else if (id == R.id.run)
             runMission();
+        else if (id == R.id.status)
+            showStatusDialog();
     }
 
     @Override
@@ -386,6 +398,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         bAdd = findViewById(R.id.add);
         bConfig = findViewById(R.id.config);
         bRun = findViewById(R.id.run);
+        bStatus = findViewById(R.id.status);
         bDelete.setOnClickListener(this);
         bGsd.setOnClickListener(this);
         bIsSimulating.setOnClickListener(this);
@@ -393,6 +406,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         bAdd.setOnClickListener(this);
         bConfig.setOnClickListener(this);
         bRun.setOnClickListener(this);
+        bStatus.setOnClickListener(this);
 
         lSettings = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_setting, null);
         rgSpeed = lSettings.findViewById(R.id.speed);
@@ -423,6 +437,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         lMetrics = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_metrics, null);
         tPathDistance = lMetrics.findViewById(R.id.pathDistance);
         tPathDistanceDJI = lMetrics.findViewById(R.id.pathDistanceDJI);
+        tEstimatedTime = lMetrics.findViewById(R.id.estimatedTime);
         tEstimatedTimeDJI = lMetrics.findViewById(R.id.estimatedTimeDJI);
         tQuantityPhoto = lMetrics.findViewById(R.id.quantityPhoto);
 
@@ -436,6 +451,23 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
 
                 })
                 .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                })
+                .create();
+
+        lStatus = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_status, null);
+        tDistanceTraveled = lStatus.findViewById(R.id.distanceTraveled);
+        tCurrentDateTime = lStatus.findViewById(R.id.currentDateTime);
+        tInitialDateTime = lStatus.findViewById(R.id.initialDateTime);
+        tFinalDateTime = lStatus.findViewById(R.id.finalDateTime);
+        tElapsedTime = lStatus.findViewById(R.id.elapsedTime);
+
+        adStatus = new AlertDialog.Builder(this)
+                .setTitle("")
+                .setView(lStatus)
+                .setPositiveButton("Fechar", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.cancel();
                     }
@@ -501,9 +533,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void cameraUpdate() {
-        LatLng latlng = dji.getLocation(); // Melhoria?
-
-        if (latlng == null)
+        LatLng latlng;
+        if (dji.checkGpsCoordination(vant.latitude, vant.longitude))
+            latlng = new LatLng(vant.latitude, vant.longitude);
+        else
             latlng = new LatLng(-23.1858535, -50.6574255);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, 19.0f));
@@ -575,12 +608,37 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void showMetricsDialog() {
-        tPathDistance.setText("Distância total do caminho: " + decimalFormatter.format(calculateTotalDistance(aoi.getGridPoints())) + " m");
-        tPathDistanceDJI.setText("Distância total do caminho (DJI): " + decimalFormatter.format(mission.calculateTotalDistance()) + " m");
-        // Tempo Estimado
-        tQuantityPhoto.setText("Quantidade de fotos: " + mission.getWaypointCount());
+        pathDistance = calculateTotalDistance(aoi.getGridPoints());
+        pathDistanceDJI = mission.calculateTotalDistance();
+        estimatedTime = convertingDoubleToHoursMinutesSecondsMilliseconds((long) (4.2 * calculateTotalDistance(aoi.getGridPoints()) / mSpeed));
+        estimatedTimeDJI = convertingDoubleToHoursMinutesSecondsMilliseconds(mission.calculateTotalTime().longValue());
+        quantityPhoto = mission.getWaypointCount();
+
+        tPathDistance.setText("Distância total do caminho: " + decimalFormatter.format(pathDistance) + " m");
+        tPathDistanceDJI.setText("Distância total do caminho (DJI): " + decimalFormatter.format(pathDistanceDJI) + " m");
+        tEstimatedTime.setText("Tempo total: " + estimatedTime);
+        tEstimatedTimeDJI.setText("Tempo total (DJI): " + estimatedTimeDJI);
+        tQuantityPhoto.setText("Quantidade de fotos: " + quantityPhoto);
 
         adMetrics.show();
+    }
+
+    private void updateStatusDialog() {
+        tInitialDateTime.setText("Data e hora inicial: " + initialDateTime);
+        tCurrentDateTime.setText("Data e hora atual: " + currentDateTime);
+        tFinalDateTime.setText("Data e hora final: " + finalDateTime);
+        tElapsedTime.setText("Tempo decorrido: " + calculateElapsedTime(initialDateTime, finalDateTime));
+        tDistanceTraveled.setText("Distância percorrida: " + decimalFormatter.format(distanceTraveled) + " m");
+    }
+
+    private void showStatusDialog() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                updateStatusDialog();
+                adStatus.show();
+            }
+        });
     }
 
     private boolean onProductConnectionChange() {
@@ -590,11 +648,24 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         return isConnected;
     }
 
-    StateCallback updateDroneLocation = () -> runOnUiThread(new Runnable() {
+    StateCallback updateDroneLocation = (FlightState flightState) -> runOnUiThread(new Runnable() {
         @Override
         public void run() {
-            LatLng latlng = dji.getLocation();
-            aoi.setVant(latlng, dji.getAttitudeYaw());
+            if (isCovering) {
+                currentDateTime = vant.currentDateTime;
+                if (initialDateTime.equals("dd/MM/yyyy HH:mm:ss.SSS"))
+                    initialDateTime = currentDateTime;
+                finalDateTime = currentDateTime;
+                elapsedTime = calculateElapsedTime(initialDateTime, finalDateTime);
+                distanceTraveled += calculateDistance(new LatLng(vant.latitude, vant.longitude),
+                        new LatLng(flightState.latitude, flightState.longitude));
+
+                if (adStatus.isShowing())
+                    updateStatusDialog();
+            }
+
+            aoi.setVant(new LatLng(flightState.latitude, flightState.longitude), flightState.yaw);
+            vant = flightState.clone();
         }
     });
 

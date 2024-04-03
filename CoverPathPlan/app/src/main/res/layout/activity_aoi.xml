@@ -65,6 +65,12 @@
                 android:text="Upload" />
 
             <Button
+                android:id="@+id/status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Status" />
+
+            <Button
                 android:id="@+id/config"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

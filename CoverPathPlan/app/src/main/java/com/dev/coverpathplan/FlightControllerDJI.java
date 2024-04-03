@@ -1,12 +1,14 @@
 package com.dev.coverpathplan;
 
-import androidx.annotation.NonNull;
+import static com.dev.coverpathplan.FlightState.timeStamp2Date;
 
-import com.google.android.gms.maps.model.LatLng;
+import androidx.annotation.NonNull;
 
 import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJIError;
+import dji.common.flightcontroller.Attitude;
 import dji.common.flightcontroller.FlightControllerState;
+import dji.common.flightcontroller.LocationCoordinate3D;
 import dji.common.flightcontroller.simulator.InitializationData;
 import dji.common.flightcontroller.simulator.SimulatorState;
 import dji.common.gimbal.Rotation;
@@ -19,7 +21,7 @@ import dji.sdk.flightcontroller.Simulator;
 import dji.sdk.products.Aircraft;
 
 interface StateCallback {
-    void execute();
+    void execute(FlightState flightState);
 }
 
 @SuppressWarnings("Convert2Lambda")
@@ -28,13 +30,11 @@ public class FlightControllerDJI {
     private FlightController mFlightController;
     private Simulator mFlightControllerSimulator;
     private boolean isSimulating = true;
-    private double locationLat = 181, locationLng = 181, attitudeYaw;
+    private FlightState flightState = new FlightState();
 
     boolean setProduct(BaseProduct Baseproduct, boolean simulate, StateCallback callback) {
         mProduct = Baseproduct;
         isSimulating = simulate;
-        locationLat = 181;
-        locationLng = 181;
 
         if (mProduct != null && mProduct.isConnected()) {
             if (mProduct instanceof Aircraft) {
@@ -60,10 +60,28 @@ public class FlightControllerDJI {
                 mFlightController.setStateCallback(new FlightControllerState.Callback() {
                     @Override
                     public void onUpdate(@NonNull FlightControllerState djiFlightControllerCurrentState) {
-                        locationLat = djiFlightControllerCurrentState.getAircraftLocation().getLatitude();
-                        locationLng = djiFlightControllerCurrentState.getAircraftLocation().getLongitude();
-                        attitudeYaw = djiFlightControllerCurrentState.getAttitude().yaw;
-                        callback.execute();
+                        flightState.currentDateTime = timeStamp2Date("dd/MM/yyyy HH:mm:ss.SSS");
+                        flightState.areMotorsOn = djiFlightControllerCurrentState.areMotorsOn();
+                        flightState.isFlying = djiFlightControllerCurrentState.isFlying();
+                        LocationCoordinate3D aircraftLocation = djiFlightControllerCurrentState.getAircraftLocation();
+                        flightState.latitude = aircraftLocation.getLatitude();
+                        flightState.longitude = aircraftLocation.getLongitude();
+                        flightState.altitude = aircraftLocation.getAltitude();
+                        flightState.takeoffLocationAltitude = djiFlightControllerCurrentState.getTakeoffLocationAltitude();
+                        Attitude attitude = djiFlightControllerCurrentState.getAttitude();
+                        flightState.pitch = attitude.pitch;
+                        flightState.roll = attitude.roll;
+                        flightState.yaw = attitude.yaw;
+                        flightState.velocityX = djiFlightControllerCurrentState.getVelocityX();
+                        flightState.velocityY = djiFlightControllerCurrentState.getVelocityY();
+                        flightState.velocityZ = djiFlightControllerCurrentState.getVelocityZ();
+                        flightState.flightTimeInSeconds = djiFlightControllerCurrentState.getFlightTimeInSeconds();
+                        flightState.flightMode = djiFlightControllerCurrentState.getFlightMode().name();
+                        flightState.satelliteCount = djiFlightControllerCurrentState.getSatelliteCount();
+                        flightState.ultrasonicHeight = djiFlightControllerCurrentState.getUltrasonicHeightInMeters();
+                        flightState.flightCount = djiFlightControllerCurrentState.getFlightCount();
+                        flightState.aircraftHeadDirection = String.valueOf(djiFlightControllerCurrentState.getAircraftHeadDirection());
+                        callback.execute(flightState);
                     }
                 });
             }
@@ -79,10 +97,19 @@ public class FlightControllerDJI {
                 mFlightControllerSimulator.setStateCallback(new SimulatorState.Callback() {
                     @Override
                     public void onUpdate(@NonNull SimulatorState simulatorState) {
-                        locationLat = simulatorState.getLocation().getLatitude();
-                        locationLng = simulatorState.getLocation().getLongitude();
-                        attitudeYaw = simulatorState.getYaw();
-                        callback.execute();
+                        flightState.currentDateTime = timeStamp2Date("dd/MM/yyyy HH:mm:ss.SSS");
+                        flightState.areMotorsOn = simulatorState.areMotorsOn();
+                        flightState.isFlying = simulatorState.isFlying();
+                        LocationCoordinate2D location = simulatorState.getLocation();
+                        flightState.latitude = location.getLatitude();
+                        flightState.longitude = location.getLongitude();
+                        flightState.positionX = simulatorState.getPositionX();
+                        flightState.positionY = simulatorState.getPositionY();
+                        flightState.positionZ = simulatorState.getPositionZ();
+                        flightState.pitch = simulatorState.getPitch();
+                        flightState.roll = simulatorState.getRoll();
+                        flightState.yaw = simulatorState.getYaw();
+                        callback.execute(flightState);
                     }
                 });
             }
@@ -108,17 +135,7 @@ public class FlightControllerDJI {
         }
     }
 
-    LatLng getLocation() {
-        if (!checkGpsCoordination())
-            return null;
-        return new LatLng(locationLat, locationLng);
-    }
-
-    boolean checkGpsCoordination() {
+    boolean checkGpsCoordination(double locationLat, double locationLng) {
         return (locationLat > -90 && locationLat < 90 && locationLng > -180 && locationLng < 180) && (locationLat != 0f && locationLng != 0f);
-    }
-
-    double getAttitudeYaw() {
-        return attitudeYaw;
     }
 }
