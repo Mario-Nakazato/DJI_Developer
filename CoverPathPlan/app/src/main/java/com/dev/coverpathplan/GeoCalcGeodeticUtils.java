@@ -380,6 +380,7 @@ public class GeoCalcGeodeticUtils {
             Log.v("Grid", "currentDistanceAltura: " + currentDistanceAltura);
             currentDistanceAltura += distanceBetweenFootprintLargura;
         }
+        mBearingLargura = bearingLargura;
 
         // Bloco de log para todas as variáveis
         Log.v("Grid", "offsetAltura: " + offsetAltura + " %");

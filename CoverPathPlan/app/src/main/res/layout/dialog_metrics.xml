@@ -12,7 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:text="Métricas" />
+        android:text="Métricas de cobertura" />
 
     <ScrollView
         android:layout_width="match_parent"
@@ -32,7 +32,7 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginBottom="8dp"
-                android:text="Distancia total do caminho: - m" />
+                android:text="Distância total do caminho: - m" />
 
             <TextView
                 android:id="@+id/pathDistanceDJI"
@@ -42,7 +42,7 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginBottom="8dp"
-                android:text="Distancia total do caminho (DJI): - m" />
+                android:text="Distância total do caminho (DJI): - m" />
 
             <TextView
                 android:id="@+id/estimatedTime"
@@ -52,7 +52,7 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginBottom="8dp"
-                android:text="Tempo total: - min" />
+                android:text="Tempo total estimado: HH:mm:ss.SSS" />
 
             <TextView
                 android:id="@+id/estimatedTimeDJI"
@@ -62,7 +62,7 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginBottom="8dp"
-                android:text="Tempo total (DJI): - seg" />
+                android:text="Tempo total estimado (DJI): HH:mm:ss.SSS" />
 
             <TextView
                 android:id="@+id/quantityPhoto"

@@ -208,7 +208,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                         aoi.setFinalPath();
                         break;
                     default:
-                        showToast("Defina caminhos no botão Caminho");
+                        if (bRun.getText().equals("Upload"))
+                            showToast("Defina caminhos no botão Caminho");
                 }
             }
         });
@@ -477,15 +478,16 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void runMission() {
+        if (bRun.getText().equals("Parar")) {
+            mission.stopMission();
+            return;
+        }
+
         if (!bAdd.getText().equals("Caminho")) {
             showToast("Termine de definir o caminho antes do upload da missão");
             return;
         }
 
-        if (bRun.getText().equals("Parar")) {
-            mission.stopMission();
-            return;
-        }
 
         if (!mission.setPathWaypoint(aoi.getPathPoint()))
             return;
@@ -573,9 +575,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void showMetricsDialog() {
-        tPathDistance.setText("Distancia total do caminho: " + decimalFormatter.format(calculateTotalDistance(aoi.getGridPoints())) + " m");
-        tPathDistanceDJI.setText("Distancia total do caminho (DJI): " + decimalFormatter.format(mission.calculateTotalDistance()) + " m");
-        tEstimatedTimeDJI.setText("Tempo total (DJI): " + mission.calculateTotalTime().intValue() + " s");
+        tPathDistance.setText("Distância total do caminho: " + decimalFormatter.format(calculateTotalDistance(aoi.getGridPoints())) + " m");
+        tPathDistanceDJI.setText("Distância total do caminho (DJI): " + decimalFormatter.format(mission.calculateTotalDistance()) + " m");
         // Tempo Estimado
         tQuantityPhoto.setText("Quantidade de fotos: " + mission.getWaypointCount());
 
