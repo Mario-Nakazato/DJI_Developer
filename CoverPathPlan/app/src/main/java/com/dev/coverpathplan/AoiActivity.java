@@ -4,6 +4,7 @@ import static com.dev.coverpathplan.FlightState.calculateElapsedTime;
 import static com.dev.coverpathplan.FlightState.convertingDoubleToHoursMinutesSecondsMilliseconds;
 import static com.dev.coverpathplan.GeoCalcGeodeticUtils.calculateDistance;
 import static com.dev.coverpathplan.GeoCalcGeodeticUtils.calculateTotalDistance;
+import static com.dev.coverpathplan.GeoCalcGeodeticUtils.mBearingLargura;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -50,14 +51,16 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private ActivityAoiBinding binding;
     private Button bDelete, bGsd, bLocate, bAdd, bIsSimulating, bConfig, bRun, bStatus;
     private TextView tPathDistance, tPathDistanceDJI, tEstimatedTime, tEstimatedTimeDJI, tQuantityPhoto,
-            tDistanceTraveled, tInitialDateTime, tCurrentDateTime, tFinalDateTime, tElapsedTime;
+            tDistanceTraveled, tBearing, tInitialDateTime, tCurrentDateTime, tFinalDateTime, tElapsedTime,
+            tvelocityAverageX, tvelocityAverageY, tvelocityAverageZ, tvelocityAverage;
     private RadioGroup rgSpeed, rgActionAfterFinished, rgAlgorithm, rgPhoto;
     private LinearLayout lSettings, lMetrics, lStatus;
     private AlertDialog adSetting, adMetrics, adStatus;
     private Marker markerSelected;
     private int adding = 0, mFinishedAction = 1, algorithm = 0, quantityPhoto;
     private boolean isSimulating = false, isCovering = false;
-    private float mSpeed = 4.0f;
+    private float mSpeed = 4.0f, velocityN = 0, velocityX = 0, velocityY = 0, velocityZ = 0,
+            velocityAverageX = 0, velocityAverageY = 0, velocityAverageZ = 0, velocityAverage = 0;
     private double distanceTraveled = 0, pathDistance, pathDistanceDJI;
     private String estimatedTime, estimatedTimeDJI, initialDateTime = "dd/MM/yyyy HH:mm:ss.SSS",
             currentDateTime = "dd/MM/yyyy HH:mm:ss.SSS", finalDateTime = "dd/MM/yyyy HH:mm:ss.SSS",
@@ -159,6 +162,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                             isCovering = true;
                             initialDateTime = "dd/MM/yyyy HH:mm:ss.SSS";
                             distanceTraveled = 0;
+                            velocityN = 0;
+                            velocityX = 0;
+                            velocityY = 0;
+                            velocityZ = 0;
                             showToast("Caminho de cobertura iniciado ");
                         } else if (isCovering && i == executionEvent.getProgress().totalWaypointCount - 1
                                 && bRun.getText().equals("Parar")
@@ -440,6 +447,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         tEstimatedTime = lMetrics.findViewById(R.id.estimatedTime);
         tEstimatedTimeDJI = lMetrics.findViewById(R.id.estimatedTimeDJI);
         tQuantityPhoto = lMetrics.findViewById(R.id.quantityPhoto);
+        tBearing = lMetrics.findViewById(R.id.bearing);
 
         adMetrics = new AlertDialog.Builder(this)
                 .setTitle("")
@@ -459,6 +467,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
 
         lStatus = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_status, null);
         tDistanceTraveled = lStatus.findViewById(R.id.distanceTraveled);
+        tvelocityAverageX = lStatus.findViewById(R.id.velocityAverageX);
+        tvelocityAverageY = lStatus.findViewById(R.id.velocityAverageY);
+        tvelocityAverageZ = lStatus.findViewById(R.id.velocityAverageZ);
+        tvelocityAverage = lStatus.findViewById(R.id.velocityAverage);
         tCurrentDateTime = lStatus.findViewById(R.id.currentDateTime);
         tInitialDateTime = lStatus.findViewById(R.id.initialDateTime);
         tFinalDateTime = lStatus.findViewById(R.id.finalDateTime);
@@ -619,6 +631,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         tEstimatedTime.setText("Tempo total: " + estimatedTime);
         tEstimatedTimeDJI.setText("Tempo total (DJI): " + estimatedTimeDJI);
         tQuantityPhoto.setText("Quantidade de fotos: " + quantityPhoto);
+        tBearing.setText("Rumo: " + mBearingLargura + " º");
 
         adMetrics.show();
     }
@@ -629,6 +642,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         tFinalDateTime.setText("Data e hora final: " + finalDateTime);
         tElapsedTime.setText("Tempo decorrido: " + calculateElapsedTime(initialDateTime, finalDateTime));
         tDistanceTraveled.setText("Distância percorrida: " + decimalFormatter.format(distanceTraveled) + " m");
+        tvelocityAverageX.setText("Velocidade média X: " + decimalFormatter.format(velocityAverageX) + " m/s");
+        tvelocityAverageY.setText("Velocidade média Y: " + decimalFormatter.format(velocityAverageY) + " m/s");
+        tvelocityAverageZ.setText("Velocidade média Z: " + decimalFormatter.format(velocityAverageZ) + " m/s");
+        tvelocityAverage.setText("Velocidade média: " + decimalFormatter.format(velocityAverage) + " m/s");
     }
 
     private void showStatusDialog() {
@@ -659,6 +676,14 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 elapsedTime = calculateElapsedTime(initialDateTime, finalDateTime);
                 distanceTraveled += calculateDistance(new LatLng(vant.latitude, vant.longitude),
                         new LatLng(flightState.latitude, flightState.longitude));
+                velocityN++;
+                velocityX += vant.velocityX;
+                velocityY += vant.velocityY;
+                velocityZ += vant.velocityZ;
+                velocityAverageX = velocityX / velocityN;
+                velocityAverageY = velocityY / velocityN;
+                velocityAverageZ = velocityZ / velocityN;
+                velocityAverage = (float) Math.sqrt(velocityX * velocityX + velocityY * velocityY + velocityZ * velocityZ);
 
                 if (adStatus.isShowing())
                     updateStatusDialog();
