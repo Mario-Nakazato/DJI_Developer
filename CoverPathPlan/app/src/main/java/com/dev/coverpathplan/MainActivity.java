@@ -25,6 +25,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     private DJISDKManager.SDKManagerCallback mDJISDKManagerCallback;
     private static BaseProduct mProduct;
     private static WaypointMissionOperator mMissionOperator;
+    private static FirebaseDatabase database;
     private Handler mHandler;
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
@@ -278,6 +280,15 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return mMissionOperator;
+    }
+
+    public static FirebaseDatabase getDatabase() {
+        if (database == null) {
+            database = FirebaseDatabase.getInstance();
+            database.setPersistenceEnabled(true); // Permite funcionalidade offline persiste armazenamento local
+            database.goOnline(); // (Re)conecta ao banco de dados sincroniza em tempo real
+        }
+        return database;
     }
 
     private void notifyStatusChange() {

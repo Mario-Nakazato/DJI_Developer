@@ -81,6 +81,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="GSD" />
+
+            <Button
+                android:id="@+id/clone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Clonar" />
         </LinearLayout>
     </ScrollView>
 

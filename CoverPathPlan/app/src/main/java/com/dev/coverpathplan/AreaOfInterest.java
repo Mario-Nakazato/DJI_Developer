@@ -140,6 +140,26 @@ public class AreaOfInterest {
         }
     }
 
+    boolean deleteVertex(LatLng vertex) {
+        int i = aoiVertex.indexOf(vertex);
+
+        if (i == -1)
+            return false;
+
+        try {
+            aoiVertex.remove(i);
+            aoiVertexMarker.remove(i).remove();
+            aoi.setPoints(aoiVertex);
+
+            if (!isPolygon())
+                aoi.setStrokeColor(Color.BLACK);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     List<LatLng> getAoiVertex() {
         return aoiVertex;
     }

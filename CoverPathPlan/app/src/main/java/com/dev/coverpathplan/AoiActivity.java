@@ -5,6 +5,7 @@ import static com.dev.coverpathplan.FlightState.convertingDoubleToHoursMinutesSe
 import static com.dev.coverpathplan.GeoCalcGeodeticUtils.calculateDistance;
 import static com.dev.coverpathplan.GeoCalcGeodeticUtils.calculateTotalDistance;
 import static com.dev.coverpathplan.GeoCalcGeodeticUtils.mBearingLargura;
+import static com.dev.coverpathplan.MainActivity.getDatabase;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -34,8 +35,10 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -53,7 +56,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     private ActivityAoiBinding binding;
-    private Button bDelete, bGsd, bLocate, bAdd, bIsSimulating, bConfig, bRun, bStatus;
+    private Button bDelete, bGsd, bLocate, bAdd, bIsSimulating, bConfig, bRun, bStatus, bClone;
     private TextView tPathDistance, tPathDistanceDJI, tEstimatedTime, tEstimatedTimeDJI, tQuantityPhoto,
             tDistanceTraveled, tBearing, tInitialDateTime, tCurrentDateTime, tFinalDateTime, tElapsedTime,
             tvelocityAverageX, tvelocityAverageY, tvelocityAverageZ, tvelocityAverage;
@@ -61,7 +64,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private LinearLayout lSettings, lMetrics, lStatus;
     private AlertDialog adSetting, adMetrics, adStatus;
     private Marker markerSelected;
-    private int adding = 0, mFinishedAction = 1, algorithm = 0, quantityPhoto;
+    private int adding = 0, mFinishedAction = 1, algorithm = 0, quantityPhoto, nPath = 0;
     private boolean isSimulating = false, isCovering = false;
     private float mSpeed = 4.0f, velocityN = 0, velocityX = 0, velocityY = 0, velocityZ = 0,
             velocityAverageX = 0, velocityAverageY = 0, velocityAverageZ = 0, velocityAverage = 0;
@@ -69,6 +72,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private String estimatedTime, estimatedTimeDJI, initialDateTime = "dd/MM/yyyy HH:mm:ss.SSS",
             currentDateTime = "dd/MM/yyyy HH:mm:ss.SSS", finalDateTime = "dd/MM/yyyy HH:mm:ss.SSS",
             elapsedTime = "HH:mm:ss.SSS";
+    private List<String> paths;
     private DecimalFormat decimalFormatter = new DecimalFormat("0.00");
     private AreaOfInterest aoi;
     private JTSGeometryUtils jtsgu;
@@ -107,9 +111,9 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         filter.addAction(MainActivity.FLAG_CONNECTION_CHANGE);
         registerReceiver(mReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
 
-        FirebaseDatabase.getInstance().setPersistenceEnabled(true); // Permite funcionalidade offline persiste armazenamento local
-        FirebaseDatabase.getInstance().goOnline(); // (Re)conecta ao banco de dados sincroniza em tempo real
-        databaseReference = FirebaseDatabase.getInstance().getReference();
+        databaseReference = getDatabase().getReference();
+        if (databaseReference == null)
+            showToast("Banco de dados desconectado");
 
         initUI();
 
@@ -178,20 +182,48 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                             velocityY = 0;
                             velocityZ = 0;
 
-                            dataMap = new HashMap<>();
-                            dataMap.put("vertex", aoi.getAoiVertex());
-                            dataMap.put("bearing", mBearingLargura);
-                            dataMap.put("speed", mSpeed);
-                            dataMap.put("finishedAction", mFinishedAction);
-                            dataMap.put("algorithm", algorithm == 0 ? "Boustrophedon Cellular Decomposition" : "Spanning Tree Coverage");
-                            dataMap.put("isTakePhoto", mission.isTakePhoto());
-                            dataMap.put("gsdLargura", CaptureArea.getGsdLargura());
-                            dataMap.put("gsdAltura", CaptureArea.getGsdAltura());
-                            dataMap.put("overlapLargura", CaptureArea.getOverlapLargura());
-                            dataMap.put("overlapAltura", CaptureArea.getOverlapAltura());
-                            dataMap.put("footprintLargura", CaptureArea.getFootprintLargura());
-                            dataMap.put("footprintAltura", CaptureArea.getFootprintAltura());
-                            planning.updateChildren(dataMap);
+                            if (planning != null) {
+                                dataMap = new HashMap<>();
+                                dataMap.put("vertex", aoi.getAoiVertex());
+                                dataMap.put("bearing", mBearingLargura);
+                                dataMap.put("speed", mSpeed);
+                                dataMap.put("finishedAction", mFinishedAction);
+                                dataMap.put("algorithm", algorithm == 0 ? "Boustrophedon Cellular Decomposition" : "Spanning Tree Coverage");
+                                dataMap.put("isTakePhoto", mission.isTakePhoto());
+                                dataMap.put("gsdLargura", CaptureArea.getGsdLargura());
+                                dataMap.put("gsdAltura", CaptureArea.getGsdAltura());
+                                dataMap.put("overlapLargura", CaptureArea.getOverlapLargura());
+                                dataMap.put("overlapAltura", CaptureArea.getOverlapAltura());
+                                dataMap.put("footprintLargura", CaptureArea.getFootprintLargura());
+                                dataMap.put("footprintAltura", CaptureArea.getFootprintAltura());
+                                planning.updateChildren(dataMap);
+
+                                paths = new ArrayList<>();
+                                databaseReference.child("SimulatorState").get()
+                                        .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+                                            @Override
+                                            public void onComplete(@NonNull Task<DataSnapshot> task) {
+                                                if (task.isSuccessful()) {
+                                                    for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                                                        paths.add("SimulatorState/" + snapshot.getKey());
+                                                    }
+                                                }
+                                            }
+                                        });
+
+                                databaseReference.child("FlightControllerState").get()
+                                        .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+                                            @Override
+                                            public void onComplete(@NonNull Task<DataSnapshot> task) {
+                                                if (task.isSuccessful()) {
+                                                    for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                                                        paths.add("FlightControllerState/" + snapshot.getKey());
+                                                    }
+                                                }
+                                            }
+                                        });
+                            } else
+                                showToast("Falha no banco de dados, planning");
                             showToast("Caminho de cobertura iniciado ");
                         } else if (isCovering && i == executionEvent.getProgress().totalWaypointCount - 1
                                 && bRun.getText().equals("Parar")
@@ -389,6 +421,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             runMission();
         else if (id == R.id.status)
             showStatusDialog();
+        else if (id == R.id.clone)
+            duplicate();
     }
 
     @Override
@@ -432,6 +466,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         bConfig = findViewById(R.id.config);
         bRun = findViewById(R.id.run);
         bStatus = findViewById(R.id.status);
+        bClone = findViewById(R.id.clone);
         bDelete.setOnClickListener(this);
         bGsd.setOnClickListener(this);
         bIsSimulating.setOnClickListener(this);
@@ -440,6 +475,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         bConfig.setOnClickListener(this);
         bRun.setOnClickListener(this);
         bStatus.setOnClickListener(this);
+        bClone.setOnClickListener(this);
 
         lSettings = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_setting, null);
         rgSpeed = lSettings.findViewById(R.id.speed);
@@ -480,15 +516,22 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 .setView(lMetrics)
                 .setPositiveButton("Iniciar", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        if (isSimulating)
+                        if (isSimulating && databaseReference != null)
                             record = databaseReference.child("SimulatorState");
-                        else
+                        else if (databaseReference != null)
                             record = databaseReference.child("FlightControllerState");
-                        String hash = record.push().getKey();
-                        cover = record.child(hash);
-                        planning = cover.child("planning");
-                        path = cover.child("path");
-                        metrics = cover.child("metrics");
+
+                        if (record != null) {
+                            String hash = record.push().getKey();
+                            cover = record.child(hash);
+                            if (cover != null) {
+                                planning = cover.child("planning");
+                                path = cover.child("path");
+                                metrics = cover.child("metrics");
+                            } else
+                                showToast("Falha no banco de dados, cobertura");
+                        } else
+                            showToast("Falha no banco de dados, registro");
                         mission.startMission();
                     }
 
@@ -520,6 +563,31 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                     }
                 })
                 .create();
+
+        paths = new ArrayList<>();
+        databaseReference.child("SimulatorState").get()
+                .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DataSnapshot> task) {
+                        if (task.isSuccessful()) {
+                            for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                                paths.add("SimulatorState/" + snapshot.getKey());
+                            }
+                        }
+                    }
+                });
+
+        databaseReference.child("FlightControllerState").get()
+                .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DataSnapshot> task) {
+                        if (task.isSuccessful()) {
+                            for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                                paths.add("FlightControllerState/" + snapshot.getKey());
+                            }
+                        }
+                    }
+                });
     }
 
     private void addPath() {
@@ -693,6 +761,41 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         });
     }
 
+    private void duplicate() {
+        if (bRun.getText().equals("Upload")) {
+            if (databaseReference != null) {
+                if (!paths.isEmpty()) {
+                    databaseReference.child(paths.get(nPath) + "/planning/vertex").get()
+                            .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+                                @Override
+                                public void onComplete(@NonNull Task<DataSnapshot> task) {
+                                    if (task.isSuccessful()) {
+                                        List<LatLng> delete = new ArrayList<>(aoi.getAoiVertex());
+                                        for (LatLng vertex : delete)
+                                            aoi.deleteVertex(vertex);
+                                        for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                                            double latitude = snapshot.child("latitude").getValue(Double.class);
+                                            double longitude = snapshot.child("longitude").getValue(Double.class);
+                                            LatLng vertex = new LatLng(latitude, longitude);
+                                            aoi.addVertex(vertex);
+                                            aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
+                                            createPath();
+                                            if (!bAdd.getText().equals("Cobertura")) {
+                                                aoi.setVisibleVertex(false);
+                                                aoi.setVisibleObb(false);
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                    nPath++;
+                    nPath = nPath < paths.size() ? nPath : 0;
+                }
+            } else
+                showToast("Missão em execução, não pode definir caminhos");
+        }
+    }
+
     private boolean onProductConnectionChange() {
         boolean isConnected = dji.setProduct(MainActivity.getProductInstance(), isSimulating, updateDroneLocation);
         if (isConnected)
@@ -704,6 +807,14 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         @Override
         public void run() {
             if (isCovering) {
+                String hash;
+                DatabaseReference currentData = null;
+                if (path != null) {
+                    hash = path.push().getKey();
+                    currentData = path.child(hash);
+                } else
+                    showToast("Falha no banco de dados, caminho");
+
                 currentDateTime = vant.currentDateTime;
                 if (initialDateTime.equals("dd/MM/yyyy HH:mm:ss.SSS"))
                     initialDateTime = currentDateTime;
@@ -720,48 +831,55 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 velocityAverageZ = velocityZ / velocityN;
                 velocityAverage = (float) Math.sqrt(velocityX * velocityX + velocityY * velocityY + velocityZ * velocityZ);
 
-                String hash = path.push().getKey();
-                DatabaseReference currentData = path.child(hash);
-                Map<String, Object> dataMap = new HashMap<>();
-                dataMap.put("currentDateTime", vant.currentDateTime);
-                dataMap.put("areMotorsOn", vant.areMotorsOn);
-                dataMap.put("isFlying", vant.isFlying);
-                dataMap.put("latitude", vant.latitude);
-                dataMap.put("longitude", vant.longitude);
-                dataMap.put("altitude", vant.altitude);
-                dataMap.put("positionX", vant.positionX);
-                dataMap.put("positionY", vant.positionY);
-                dataMap.put("positionZ", vant.positionZ);
-                dataMap.put("takeoffLocationAltitude", vant.takeoffLocationAltitude);
-                dataMap.put("pitch", vant.pitch);
-                dataMap.put("roll", vant.roll);
-                dataMap.put("yaw", vant.yaw);
-                dataMap.put("velocityX", vant.velocityX);
-                dataMap.put("velocityY", vant.velocityY);
-                dataMap.put("velocityZ", vant.velocityZ);
-                dataMap.put("flightTimeInSeconds", vant.flightTimeInSeconds);
-                dataMap.put("flightMode", vant.flightMode);
-                dataMap.put("satelliteCount", vant.satelliteCount);
-                dataMap.put("ultrasonicHeight", vant.ultrasonicHeight);
-                dataMap.put("flightCount", vant.flightCount);
-                dataMap.put("aircraftHeadDirection", vant.aircraftHeadDirection);
-                currentData.updateChildren(dataMap);
+                Map<String, Object> dataMap;
+                if (currentData != null) {
+                    dataMap = new HashMap<>();
+                    dataMap.put("currentDateTime", vant.currentDateTime);
+                    dataMap.put("areMotorsOn", vant.areMotorsOn);
+                    dataMap.put("isFlying", vant.isFlying);
+                    dataMap.put("latitude", vant.latitude);
+                    dataMap.put("longitude", vant.longitude);
+                    dataMap.put("altitude", vant.altitude);
+                    dataMap.put("positionX", vant.positionX);
+                    dataMap.put("positionY", vant.positionY);
+                    dataMap.put("positionZ", vant.positionZ);
+                    dataMap.put("takeoffLocationAltitude", vant.takeoffLocationAltitude);
+                    dataMap.put("pitch", vant.pitch);
+                    dataMap.put("roll", vant.roll);
+                    dataMap.put("yaw", vant.yaw);
+                    dataMap.put("velocityX", vant.velocityX);
+                    dataMap.put("velocityY", vant.velocityY);
+                    dataMap.put("velocityZ", vant.velocityZ);
+                    dataMap.put("flightTimeInSeconds", vant.flightTimeInSeconds);
+                    dataMap.put("flightMode", vant.flightMode);
+                    dataMap.put("satelliteCount", vant.satelliteCount);
+                    dataMap.put("ultrasonicHeight", vant.ultrasonicHeight);
+                    dataMap.put("flightCount", vant.flightCount);
+                    dataMap.put("aircraftHeadDirection", vant.aircraftHeadDirection);
+                    currentData.updateChildren(dataMap);
+                } else {
+                    showToast("Falha no banco de dados, dados");
+                }
 
-                dataMap = new HashMap<>();
-                dataMap.put("pathDistance", pathDistance);
-                dataMap.put("pathDistanceDJI", pathDistanceDJI);
-                dataMap.put("estimatedTime", estimatedTime);
-                dataMap.put("estimatedTimeDJI", estimatedTimeDJI);
-                dataMap.put("quantityPhoto", quantityPhoto);
-                dataMap.put("initialDateTime", initialDateTime);
-                dataMap.put("finalDateTime", finalDateTime);
-                dataMap.put("elapsedTime", elapsedTime);
-                dataMap.put("distanceTraveled", distanceTraveled);
-                dataMap.put("velocityAverageX", velocityAverageX);
-                dataMap.put("velocityAverageY", velocityAverageY);
-                dataMap.put("velocityAverageZ", velocityAverageZ);
-                dataMap.put("velocityAverage", velocityAverage);
-                metrics.updateChildren(dataMap);
+                if (metrics != null) {
+                    dataMap = new HashMap<>();
+                    dataMap.put("pathDistance", pathDistance);
+                    dataMap.put("pathDistanceDJI", pathDistanceDJI);
+                    dataMap.put("estimatedTime", estimatedTime);
+                    dataMap.put("estimatedTimeDJI", estimatedTimeDJI);
+                    dataMap.put("quantityPhoto", quantityPhoto);
+                    dataMap.put("initialDateTime", initialDateTime);
+                    dataMap.put("finalDateTime", finalDateTime);
+                    dataMap.put("elapsedTime", elapsedTime);
+                    dataMap.put("distanceTraveled", distanceTraveled);
+                    dataMap.put("velocityAverageX", velocityAverageX);
+                    dataMap.put("velocityAverageY", velocityAverageY);
+                    dataMap.put("velocityAverageZ", velocityAverageZ);
+                    dataMap.put("velocityAverage", velocityAverage);
+                    metrics.updateChildren(dataMap);
+                } else
+                    showToast("Falha no banco de dados, metricas");
+
                 if (adStatus.isShowing())
                     updateStatusDialog();
             }
