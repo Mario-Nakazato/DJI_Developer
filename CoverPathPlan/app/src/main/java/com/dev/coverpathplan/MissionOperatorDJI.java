@@ -43,7 +43,7 @@ public class MissionOperatorDJI {
     private WaypointMission.Builder waypointMissionBuilder;
     private List<Waypoint> pathWaypoint;
     private WaypointAction actionPhoto, actionRotate, actionStay;
-    private boolean takePhoto = false;
+    private boolean takePhoto = true;
 
     MissionOperatorDJI() {
         pathWaypoint = new ArrayList<>();
