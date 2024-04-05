@@ -60,12 +60,12 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private TextView tPathDistance, tPathDistanceDJI, tEstimatedTime, tEstimatedTimeDJI, tQuantityPhoto,
             tDistanceTraveled, tBearing, tInitialDateTime, tCurrentDateTime, tFinalDateTime, tElapsedTime,
             tvelocityAverageX, tvelocityAverageY, tvelocityAverageZ, tvelocityAverage;
-    private RadioGroup rgSpeed, rgActionAfterFinished, rgAlgorithm, rgPhoto;
+    private RadioGroup rgSpeed, rgActionAfterFinished, rgAlgorithm, rgPhoto, rgRec;
     private LinearLayout lSettings, lMetrics, lStatus;
     private AlertDialog adSetting, adMetrics, adStatus;
     private Marker markerSelected;
     private int adding = 0, mFinishedAction = 1, algorithm = 0, quantityPhoto, nPath = 0;
-    private boolean isSimulating = false, isCovering = false;
+    private boolean isSimulating = false, isCovering = false, isRecording = false;
     private float mSpeed = 4.0f, velocityN = 0, velocityX = 0, velocityY = 0, velocityZ = 0,
             velocityAverageX = 0, velocityAverageY = 0, velocityAverageZ = 0, velocityAverage = 0;
     private double distanceTraveled = 0, pathDistance, pathDistanceDJI;
@@ -482,10 +482,12 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         rgActionAfterFinished = lSettings.findViewById(R.id.actionAfterFinished);
         rgAlgorithm = lSettings.findViewById(R.id.algorithm);
         rgPhoto = lSettings.findViewById(R.id.takePhoto);
+        rgRec = lSettings.findViewById(R.id.record);
         rgSpeed.setOnCheckedChangeListener(this);
         rgActionAfterFinished.setOnCheckedChangeListener(this);
         rgAlgorithm.setOnCheckedChangeListener(this);
         rgPhoto.setOnCheckedChangeListener(this);
+        rgRec.setOnCheckedChangeListener(this);
 
         adSetting = new AlertDialog.Builder(this)
                 .setTitle("")
@@ -516,22 +518,24 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 .setView(lMetrics)
                 .setPositiveButton("Iniciar", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        if (isSimulating && databaseReference != null)
-                            record = databaseReference.child("SimulatorState");
-                        else if (databaseReference != null)
-                            record = databaseReference.child("FlightControllerState");
+                        if (isRecording) {
+                            if (isSimulating && databaseReference != null)
+                                record = databaseReference.child("SimulatorState");
+                            else if (databaseReference != null)
+                                record = databaseReference.child("FlightControllerState");
 
-                        if (record != null) {
-                            String hash = record.push().getKey();
-                            cover = record.child(hash);
-                            if (cover != null) {
-                                planning = cover.child("planning");
-                                path = cover.child("path");
-                                metrics = cover.child("metrics");
+                            if (record != null) {
+                                String hash = record.push().getKey();
+                                cover = record.child(hash);
+                                if (cover != null) {
+                                    planning = cover.child("planning");
+                                    path = cover.child("path");
+                                    metrics = cover.child("metrics");
+                                } else
+                                    showToast("Falha no banco de dados, cobertura");
                             } else
-                                showToast("Falha no banco de dados, cobertura");
-                        } else
-                            showToast("Falha no banco de dados, registro");
+                                showToast("Falha no banco de dados, registro");
+                        }
                         mission.startMission();
                     }
 
@@ -719,6 +723,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         // Definir opção de tirar foto com base no valor de mission.isTakePhoto()
         rgPhoto.check(mission.isTakePhoto() ? R.id.yes : R.id.no);
 
+        rgRec.check(isRecording ? R.id.yesRecord : R.id.noRecord);
+
         adSetting.show();
     }
 
@@ -809,11 +815,13 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             if (isCovering) {
                 String hash;
                 DatabaseReference currentData = null;
-                if (path != null) {
-                    hash = path.push().getKey();
-                    currentData = path.child(hash);
-                } else
-                    showToast("Falha no banco de dados, caminho");
+                if (isRecording) {
+                    if (path != null) {
+                        hash = path.push().getKey();
+                        currentData = path.child(hash);
+                    } else
+                        showToast("Falha no banco de dados, caminho");
+                }
 
                 currentDateTime = vant.currentDateTime;
                 if (initialDateTime.equals("dd/MM/yyyy HH:mm:ss.SSS"))
@@ -831,55 +839,56 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 velocityAverageZ = velocityZ / velocityN;
                 velocityAverage = (float) Math.sqrt(velocityX * velocityX + velocityY * velocityY + velocityZ * velocityZ);
 
-                Map<String, Object> dataMap;
-                if (currentData != null) {
-                    dataMap = new HashMap<>();
-                    dataMap.put("currentDateTime", vant.currentDateTime);
-                    dataMap.put("areMotorsOn", vant.areMotorsOn);
-                    dataMap.put("isFlying", vant.isFlying);
-                    dataMap.put("latitude", vant.latitude);
-                    dataMap.put("longitude", vant.longitude);
-                    dataMap.put("altitude", vant.altitude);
-                    dataMap.put("positionX", vant.positionX);
-                    dataMap.put("positionY", vant.positionY);
-                    dataMap.put("positionZ", vant.positionZ);
-                    dataMap.put("takeoffLocationAltitude", vant.takeoffLocationAltitude);
-                    dataMap.put("pitch", vant.pitch);
-                    dataMap.put("roll", vant.roll);
-                    dataMap.put("yaw", vant.yaw);
-                    dataMap.put("velocityX", vant.velocityX);
-                    dataMap.put("velocityY", vant.velocityY);
-                    dataMap.put("velocityZ", vant.velocityZ);
-                    dataMap.put("flightTimeInSeconds", vant.flightTimeInSeconds);
-                    dataMap.put("flightMode", vant.flightMode);
-                    dataMap.put("satelliteCount", vant.satelliteCount);
-                    dataMap.put("ultrasonicHeight", vant.ultrasonicHeight);
-                    dataMap.put("flightCount", vant.flightCount);
-                    dataMap.put("aircraftHeadDirection", vant.aircraftHeadDirection);
-                    currentData.updateChildren(dataMap);
-                } else {
-                    showToast("Falha no banco de dados, dados");
+                if (isRecording) {
+                    Map<String, Object> dataMap;
+                    if (currentData != null) {
+                        dataMap = new HashMap<>();
+                        dataMap.put("currentDateTime", vant.currentDateTime);
+                        dataMap.put("areMotorsOn", vant.areMotorsOn);
+                        dataMap.put("isFlying", vant.isFlying);
+                        dataMap.put("latitude", vant.latitude);
+                        dataMap.put("longitude", vant.longitude);
+                        dataMap.put("altitude", vant.altitude);
+                        dataMap.put("positionX", vant.positionX);
+                        dataMap.put("positionY", vant.positionY);
+                        dataMap.put("positionZ", vant.positionZ);
+                        dataMap.put("takeoffLocationAltitude", vant.takeoffLocationAltitude);
+                        dataMap.put("pitch", vant.pitch);
+                        dataMap.put("roll", vant.roll);
+                        dataMap.put("yaw", vant.yaw);
+                        dataMap.put("velocityX", vant.velocityX);
+                        dataMap.put("velocityY", vant.velocityY);
+                        dataMap.put("velocityZ", vant.velocityZ);
+                        dataMap.put("flightTimeInSeconds", vant.flightTimeInSeconds);
+                        dataMap.put("flightMode", vant.flightMode);
+                        dataMap.put("satelliteCount", vant.satelliteCount);
+                        dataMap.put("ultrasonicHeight", vant.ultrasonicHeight);
+                        dataMap.put("flightCount", vant.flightCount);
+                        dataMap.put("aircraftHeadDirection", vant.aircraftHeadDirection);
+                        currentData.updateChildren(dataMap);
+                    } else {
+                        showToast("Falha no banco de dados, dados");
+                    }
+
+                    if (metrics != null) {
+                        dataMap = new HashMap<>();
+                        dataMap.put("pathDistance", pathDistance);
+                        dataMap.put("pathDistanceDJI", pathDistanceDJI);
+                        dataMap.put("estimatedTime", estimatedTime);
+                        dataMap.put("estimatedTimeDJI", estimatedTimeDJI);
+                        dataMap.put("quantityPhoto", quantityPhoto);
+                        dataMap.put("initialDateTime", initialDateTime);
+                        dataMap.put("finalDateTime", finalDateTime);
+                        dataMap.put("elapsedTime", elapsedTime);
+                        dataMap.put("distanceTraveled", distanceTraveled);
+                        dataMap.put("velocityAverageX", velocityAverageX);
+                        dataMap.put("velocityAverageY", velocityAverageY);
+                        dataMap.put("velocityAverageZ", velocityAverageZ);
+                        dataMap.put("velocityAverage", velocityAverage);
+                        metrics.updateChildren(dataMap);
+                    } else
+                        showToast("Falha no banco de dados, metricas");
                 }
-
-                if (metrics != null) {
-                    dataMap = new HashMap<>();
-                    dataMap.put("pathDistance", pathDistance);
-                    dataMap.put("pathDistanceDJI", pathDistanceDJI);
-                    dataMap.put("estimatedTime", estimatedTime);
-                    dataMap.put("estimatedTimeDJI", estimatedTimeDJI);
-                    dataMap.put("quantityPhoto", quantityPhoto);
-                    dataMap.put("initialDateTime", initialDateTime);
-                    dataMap.put("finalDateTime", finalDateTime);
-                    dataMap.put("elapsedTime", elapsedTime);
-                    dataMap.put("distanceTraveled", distanceTraveled);
-                    dataMap.put("velocityAverageX", velocityAverageX);
-                    dataMap.put("velocityAverageY", velocityAverageY);
-                    dataMap.put("velocityAverageZ", velocityAverageZ);
-                    dataMap.put("velocityAverage", velocityAverage);
-                    metrics.updateChildren(dataMap);
-                } else
-                    showToast("Falha no banco de dados, metricas");
-
                 if (adStatus.isShowing())
                     updateStatusDialog();
             }

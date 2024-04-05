@@ -197,6 +197,42 @@
                         android:text="Não" />
                 </RadioGroup>
             </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="16dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="Registrar cobertura:" />
+
+                <RadioGroup
+                    android:id="@+id/record"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:orientation="horizontal">
+
+                    <RadioButton
+                        android:id="@+id/yesRecord"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:text="Sim" />
+
+                    <RadioButton
+                        android:id="@+id/noRecord"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:text="Não" />
+                </RadioGroup>
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 
