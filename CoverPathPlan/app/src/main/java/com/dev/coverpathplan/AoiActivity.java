@@ -34,6 +34,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -101,6 +102,9 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         IntentFilter filter = new IntentFilter();
         filter.addAction(MainActivity.FLAG_CONNECTION_CHANGE);
         registerReceiver(mReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+
+        FirebaseDatabase.getInstance().setPersistenceEnabled(true); // Permite funcionalidade offline persiste armazenamento local
+        FirebaseDatabase.getInstance().goOnline(); // (Re)conecta ao banco de dados sincroniza em tempo real
 
         initUI();
 

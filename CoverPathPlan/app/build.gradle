@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
+    id 'com.google.gms.google-services'
 }
 
 android {
@@ -59,6 +60,8 @@ dependencies {
     implementation 'org.locationtech.jts:jts-core:1.19.0'
     implementation 'com.github.grumlimited:geocalc:0.6'
     implementation 'org.jgrapht:jgrapht-core:1.5.2'
+    implementation platform('com.google.firebase:firebase-bom:32.8.0')
+    implementation("com.google.firebase:firebase-database")
 
     implementation('com.dji:dji-sdk:4.17', {
         /**
