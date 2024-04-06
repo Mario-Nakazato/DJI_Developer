@@ -71,9 +71,11 @@ public class Database {
         planning.updateChildren(dataMap);
     }
 
-    void pathRecord(FlightState flightState) {
-        String hash = cover.child("path").push().getKey();
-        path = cover.child("path").child(hash);
+    void pathRecord(FlightState flightState, int chargeRemaining, int chargeRemainingInPercent, int voltage, int current) {
+        String h = cover.child("path").push().getKey();
+        if (h == null)
+            h = cover.child("path").push().getKey();
+        path = cover.child("path").child(h);
 
         if (path == null)
             return;
@@ -101,12 +103,17 @@ public class Database {
         dataMap.put("ultrasonicHeight", flightState.ultrasonicHeight);
         dataMap.put("flightCount", flightState.flightCount);
         dataMap.put("aircraftHeadDirection", flightState.aircraftHeadDirection);
+        dataMap.put("chargeRemaining", chargeRemaining);
+        dataMap.put("chargeRemainingInPercent", chargeRemainingInPercent);
+        dataMap.put("voltage", voltage);
+        dataMap.put("current", current);
         path.updateChildren(dataMap);
     }
 
     void metricsRecord(double pathDistance, double pathDistanceDJI, String estimatedTime, String estimatedTimeDJI,
                        int quantityPhoto, String initialDateTime, String finalDateTime, String elapsedTime, double distanceTraveled,
-                       double velocityAverageX, double velocityAverageY, double velocityAverageZ, double velocityAverage) {
+                       double velocityAverageX, double velocityAverageY, double velocityAverageZ, double velocityAverage,
+                       int chargeConsumption, int chargeConsumptionInPercent) {
         if (metrics == null)
             return;
 
@@ -124,6 +131,8 @@ public class Database {
         dataMap.put("velocityAverageY", velocityAverageY);
         dataMap.put("velocityAverageZ", velocityAverageZ);
         dataMap.put("velocityAverage", velocityAverage);
+        dataMap.put("chargeConsumption", chargeConsumption);
+        dataMap.put("chargeConsumptionInPercent", chargeConsumptionInPercent);
         metrics.updateChildren(dataMap);
     }
 

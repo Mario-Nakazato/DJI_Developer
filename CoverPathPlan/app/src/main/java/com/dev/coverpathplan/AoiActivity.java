@@ -55,12 +55,15 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private Button bDelete, bGsd, bLocate, bAdd, bIsSimulating, bConfig, bRun, bStatus, bClone;
     private TextView tPathDistance, tPathDistanceDJI, tEstimatedTime, tEstimatedTimeDJI, tQuantityPhoto,
             tDistanceTraveled, tBearing, tInitialDateTime, tCurrentDateTime, tFinalDateTime, tElapsedTime,
-            tvelocityAverageX, tvelocityAverageY, tvelocityAverageZ, tvelocityAverage;
+            tvelocityAverageX, tvelocityAverageY, tvelocityAverageZ, tvelocityAverage, tChargeRemaining,
+            tChargeRemainingInPercent, tCurrent, tVoltage, tChargeConsumption, tChargeConsumptionInPercent;
     private RadioGroup rgSpeed, rgActionAfterFinished, rgAlgorithm, rgPhoto, rgRec;
     private LinearLayout lSettings, lMetrics, lStatus;
     private AlertDialog adSetting, adMetrics, adStatus;
     private Marker markerSelected;
-    private int adding = 0, mFinishedAction = 1, algorithm = 0, quantityPhoto;
+    private int adding = 0, mFinishedAction = 1, algorithm = 0, quantityPhoto,
+            batteryChargeRemaining, batteryChargeRemainingInPercent, batteryVoltage, batteryCurrent,
+            batteryChargeConsumption, batteryChargeConsumptionInPercent;
     private boolean isSimulating = false, isCovering = false, isRecording = true;
     private float mSpeed = 4.0f, velocityN = 0, velocityX = 0, velocityY = 0, velocityZ = 0,
             velocityAverageX = 0, velocityAverageY = 0, velocityAverageZ = 0, velocityAverage = 0;
@@ -74,7 +77,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private GeoCalcGeodeticUtils gcgu;
     private FlightControllerDJI dji;
     private MissionOperatorDJI mission;
+    private StateCallback updateDroneLocation;
     private MissionOperatorDJICallback missionCallback;
+    private BatteryStateCallback batteryCallback;
+    private Battery battery;
     private Fork graph;
     private FlightState vant;
     private Database realtime;
@@ -117,6 +123,45 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         vant = new FlightState();
         realtime = new Database(getDatabase().getReference());
         realtime.updateCoveragePaths();
+        battery = new Battery();
+        updateDroneLocation = (FlightState flightState) -> runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (isCovering) {
+                    currentDateTime = vant.currentDateTime;
+                    if (initialDateTime.equals("dd/MM/yyyy HH:mm:ss.SSS")) {
+                        initialDateTime = currentDateTime;
+                    }
+                    finalDateTime = currentDateTime;
+                    elapsedTime = calculateElapsedTime(initialDateTime, finalDateTime);
+                    distanceTraveled += calculateDistance(new LatLng(vant.latitude, vant.longitude),
+                            new LatLng(flightState.latitude, flightState.longitude));
+                    velocityN++;
+                    velocityX += vant.velocityX;
+                    velocityY += vant.velocityY;
+                    velocityZ += vant.velocityZ;
+                    velocityAverageX = velocityX / velocityN;
+                    velocityAverageY = velocityY / velocityN;
+                    velocityAverageZ = velocityZ / velocityN;
+                    velocityAverage = (float) Math.sqrt(velocityX * velocityX + velocityY * velocityY + velocityZ * velocityZ);
+
+                    if (isRecording) {
+                        realtime.pathRecord(flightState.clone(), batteryChargeRemaining,
+                                batteryChargeRemainingInPercent, batteryVoltage, batteryCurrent);
+                        realtime.metricsRecord(pathDistance, pathDistanceDJI, estimatedTime, estimatedTimeDJI,
+                                quantityPhoto, initialDateTime, finalDateTime, elapsedTime, distanceTraveled,
+                                velocityAverageX, velocityAverageY, velocityAverageZ, velocityAverage,
+                                batteryChargeConsumption, batteryChargeConsumptionInPercent);
+                    }
+
+                    if (adStatus.isShowing())
+                        updateStatusDialog();
+                }
+
+                aoi.setVant(new LatLng(flightState.latitude, flightState.longitude), flightState.yaw);
+                vant = flightState.clone();
+            }
+        });
         missionCallback = new MissionOperatorDJICallback() {
             @Override
             public void uploadMission(DJIError error) {
@@ -205,6 +250,18 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 });
             }
         };
+        batteryCallback = (int chargeRemaining, int chargeRemainingInPercent, int voltage, int current) -> runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                batteryChargeConsumption += chargeRemaining - batteryChargeRemaining;
+                batteryChargeConsumptionInPercent = chargeRemainingInPercent - batteryChargeRemainingInPercent;
+
+                batteryChargeRemaining = chargeRemaining;
+                batteryChargeRemainingInPercent = chargeRemainingInPercent;
+                batteryCurrent = current;
+                batteryVoltage = voltage;
+            }
+        });
     }
 
     @SuppressLint("MissingPermission")
@@ -490,15 +547,21 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 .create();
 
         lStatus = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_status, null);
+        tInitialDateTime = lStatus.findViewById(R.id.initialDateTime);
+        tCurrentDateTime = lStatus.findViewById(R.id.currentDateTime);
+        tFinalDateTime = lStatus.findViewById(R.id.finalDateTime);
+        tElapsedTime = lStatus.findViewById(R.id.elapsedTime);
         tDistanceTraveled = lStatus.findViewById(R.id.distanceTraveled);
         tvelocityAverageX = lStatus.findViewById(R.id.velocityAverageX);
         tvelocityAverageY = lStatus.findViewById(R.id.velocityAverageY);
         tvelocityAverageZ = lStatus.findViewById(R.id.velocityAverageZ);
         tvelocityAverage = lStatus.findViewById(R.id.velocityAverage);
-        tCurrentDateTime = lStatus.findViewById(R.id.currentDateTime);
-        tInitialDateTime = lStatus.findViewById(R.id.initialDateTime);
-        tFinalDateTime = lStatus.findViewById(R.id.finalDateTime);
-        tElapsedTime = lStatus.findViewById(R.id.elapsedTime);
+        tChargeRemaining = lStatus.findViewById(R.id.chargeRemaining);
+        tChargeRemainingInPercent = lStatus.findViewById(R.id.chargeRemainingInPercent);
+        tCurrent = lStatus.findViewById(R.id.current);
+        tVoltage = lStatus.findViewById(R.id.voltage);
+        tChargeConsumption = lStatus.findViewById(R.id.chargeConsumption);
+        tChargeConsumptionInPercent = lStatus.findViewById(R.id.chargeConsumptionInPercent);
 
         adStatus = new AlertDialog.Builder(this)
                 .setTitle("")
@@ -672,6 +735,12 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         tvelocityAverageY.setText("Velocidade média Y: " + decimalFormatter.format(velocityAverageY) + " m/s");
         tvelocityAverageZ.setText("Velocidade média Z: " + decimalFormatter.format(velocityAverageZ) + " m/s");
         tvelocityAverage.setText("Velocidade média: " + decimalFormatter.format(velocityAverage) + " m/s");
+        tChargeRemaining.setText("Energia restante da bateria: " + batteryChargeRemaining + " mAh");
+        tChargeRemainingInPercent.setText("Energia restante da bateria: " + batteryChargeRemainingInPercent + " %");
+        tCurrent.setText("Corrente: " + batteryCurrent + " mA");
+        tVoltage.setText("Tensão: " + batteryVoltage + " mV");
+        tChargeConsumption.setText("Consumo de energia: " + batteryChargeConsumption + " mAh");
+        tChargeConsumptionInPercent.setText("Consumo de energia: " + batteryChargeConsumptionInPercent + " %");
     }
 
     private void showStatusDialog() {
@@ -710,46 +779,12 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private boolean onProductConnectionChange() {
         boolean isConnected = dji.setProduct(MainActivity.getProductInstance(), isSimulating, updateDroneLocation);
-        if (isConnected)
+        if (isConnected) {
             mission.setMissionOperator(MainActivity.getMissionOperatorInstance(), missionCallback);
+            battery.setProduct(MainActivity.getProductInstance(), batteryCallback);
+        }
         return isConnected;
     }
-
-    StateCallback updateDroneLocation = (FlightState flightState) -> runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-            if (isCovering) {
-                currentDateTime = vant.currentDateTime;
-                if (initialDateTime.equals("dd/MM/yyyy HH:mm:ss.SSS"))
-                    initialDateTime = currentDateTime;
-                finalDateTime = currentDateTime;
-                elapsedTime = calculateElapsedTime(initialDateTime, finalDateTime);
-                distanceTraveled += calculateDistance(new LatLng(vant.latitude, vant.longitude),
-                        new LatLng(flightState.latitude, flightState.longitude));
-                velocityN++;
-                velocityX += vant.velocityX;
-                velocityY += vant.velocityY;
-                velocityZ += vant.velocityZ;
-                velocityAverageX = velocityX / velocityN;
-                velocityAverageY = velocityY / velocityN;
-                velocityAverageZ = velocityZ / velocityN;
-                velocityAverage = (float) Math.sqrt(velocityX * velocityX + velocityY * velocityY + velocityZ * velocityZ);
-
-                if (isRecording) {
-                    realtime.pathRecord(flightState.clone());
-                    realtime.metricsRecord(pathDistance, pathDistanceDJI, estimatedTime, estimatedTimeDJI,
-                            quantityPhoto, initialDateTime, finalDateTime, elapsedTime, distanceTraveled,
-                            velocityAverageX, velocityAverageY, velocityAverageZ, velocityAverage);
-                }
-
-                if (adStatus.isShowing())
-                    updateStatusDialog();
-            }
-
-            aoi.setVant(new LatLng(flightState.latitude, flightState.longitude), flightState.yaw);
-            vant = flightState.clone();
-        }
-    });
 
     private void showToast(final String toastMsg) {
         runOnUiThread(new Runnable() {
