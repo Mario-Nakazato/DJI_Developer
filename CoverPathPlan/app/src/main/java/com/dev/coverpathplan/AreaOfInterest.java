@@ -54,7 +54,7 @@ public class AreaOfInterest {
 
     private boolean addVertexMarker(LatLng vertex) {
         Marker marker = googleMap.addMarker(new MarkerOptions().position(vertex).draggable(true)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
         marker.setTitle("V " + marker.getId());
         marker.setTag("vértice");
         return aoiVertexMarker.add(marker);
@@ -62,7 +62,7 @@ public class AreaOfInterest {
 
     private boolean addPointMarker(LatLng point) {
         Marker marker = googleMap.addMarker(new MarkerOptions().position(point).alpha(0.32f)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.photo)));
         marker.setTitle("P " + marker.getId());
         marker.setTag("ponto");
         return gridPointsMarker.add(marker);
@@ -90,7 +90,7 @@ public class AreaOfInterest {
             addVertexMarker(vertex);
 
             if (aoi == null)
-                aoi = googleMap.addPolygon(new PolygonOptions().addAll(aoiVertex).geodesic(true));
+                aoi = googleMap.addPolygon(new PolygonOptions().addAll(aoiVertex).geodesic(true).strokeWidth(8));
             else
                 aoi.setPoints(aoiVertex);
 
@@ -168,7 +168,7 @@ public class AreaOfInterest {
         try {
             if (obb == null)
                 obb = googleMap.addPolygon(new PolygonOptions().addAll(vertex).geodesic(true)
-                        .strokeColor(Color.BLUE).strokeWidth(14).zIndex(-1));
+                        .strokeColor(Color.BLUE).strokeWidth(12).zIndex(-1));
             else
                 obb.setPoints(vertex);
             return true;
@@ -216,7 +216,7 @@ public class AreaOfInterest {
         }
 
         if (boustrophedonPath == null)
-            boustrophedonPath = googleMap.addPolyline(new PolylineOptions()
+            boustrophedonPath = googleMap.addPolyline(new PolylineOptions().width(8)
                     .addAll(gridPoints).geodesic(true).addSpan(new StyleSpan(StrokeStyle
                             .gradientBuilder(Color.RED, Color.YELLOW).build())));
         else
@@ -228,7 +228,7 @@ public class AreaOfInterest {
         try {
             if (vant == null) {
                 vant = googleMap.addMarker(new MarkerOptions().position(position).title("VANT").zIndex(1)
-                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.aircraft)).flat(true)
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.drone)).flat(true)
                         .rotation((float) droneRotationYaw).anchor(0.5f, 0.5f));
                 vant.setTag("vant");
             } else {
@@ -371,7 +371,7 @@ public class AreaOfInterest {
             join.add(finalPoints.get(0));
 
         if (initialPath == null)
-            initialPath = googleMap.addPolyline(new PolylineOptions()
+            initialPath = googleMap.addPolyline(new PolylineOptions().width(8)
                     .addAll(join).geodesic(true).addSpan(new StyleSpan(Color.RED)));
         else
             initialPath.setPoints(join);
@@ -393,7 +393,7 @@ public class AreaOfInterest {
         join.addAll(finalPoints);
 
         if (finalPath == null)
-            finalPath = googleMap.addPolyline(new PolylineOptions()
+            finalPath = googleMap.addPolyline(new PolylineOptions().width(8)
                     .addAll(join).geodesic(true).addSpan(new StyleSpan(Color.YELLOW)));
         else
             finalPath.setPoints(join);
@@ -428,7 +428,7 @@ public class AreaOfInterest {
                 Node targetLatLng = nodes.get(i + 1);
 
                 minimumSpanningTree.add(googleMap.addPolyline(new PolylineOptions().zIndex(-1).geodesic(true)
-                        .add(sourceLatLng.node, targetLatLng.node).addSpan(new StyleSpan(Color.BLUE))));
+                        .add(sourceLatLng.node, targetLatLng.node).addSpan(new StyleSpan(Color.BLUE)).width(8)));
             }
             return true;
         } catch (Exception e) {
