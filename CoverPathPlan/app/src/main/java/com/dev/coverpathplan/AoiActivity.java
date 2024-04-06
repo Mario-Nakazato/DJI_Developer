@@ -63,7 +63,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private Marker markerSelected;
     private int adding = 0, mFinishedAction = 1, algorithm = 0, quantityPhoto,
             batteryChargeRemaining, batteryChargeRemainingInPercent, batteryVoltage, batteryCurrent,
-            batteryChargeConsumption, batteryChargeConsumptionInPercent;
+            batteryChargeConsumption = 0, batteryChargeConsumptionInPercent = 0;
     private boolean isSimulating = false, isCovering = false, isRecording = true;
     private float mSpeed = 4.0f, velocityN = 0, velocityX = 0, velocityY = 0, velocityZ = 0,
             velocityAverageX = 0, velocityAverageY = 0, velocityAverageZ = 0, velocityAverage = 0;
@@ -131,9 +131,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             public void run() {
                 if (isCovering) {
                     currentDateTime = vant.currentDateTime;
-                    if (initialDateTime.equals("dd/MM/yyyy HH:mm:ss.SSS")) {
+                    if (initialDateTime.equals("dd/MM/yyyy HH:mm:ss.SSS"))
                         initialDateTime = currentDateTime;
-                    }
                     finalDateTime = currentDateTime;
                     elapsedTime = calculateElapsedTime(initialDateTime, finalDateTime);
                     distanceTraveled += calculateDistance(new LatLng(vant.latitude, vant.longitude),
@@ -220,6 +219,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                             velocityX = 0;
                             velocityY = 0;
                             velocityZ = 0;
+                            batteryChargeRemaining = 0;
+                            batteryChargeConsumption = 0;
+                            batteryChargeRemainingInPercent = 0;
+                            batteryChargeConsumptionInPercent = 0;
 
                             if (isRecording)
                                 realtime.planningRecord(aoi.getAoiVertex(), mBearingLargura, mSpeed, mFinishedAction,
@@ -256,13 +259,17 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         batteryCallback = (int chargeRemaining, int chargeRemainingInPercent, int voltage, int current) -> runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                batteryChargeConsumption += chargeRemaining - batteryChargeRemaining;
-                batteryChargeConsumptionInPercent = chargeRemainingInPercent - batteryChargeRemainingInPercent;
+                if (isCovering) {
+                    if (batteryChargeRemaining != 0)
+                        batteryChargeConsumption += chargeRemaining - batteryChargeRemaining;
+                    if (batteryChargeRemainingInPercent != 0)
+                        batteryChargeConsumptionInPercent += chargeRemainingInPercent - batteryChargeRemainingInPercent;
 
-                batteryChargeRemaining = chargeRemaining;
-                batteryChargeRemainingInPercent = chargeRemainingInPercent;
-                batteryCurrent = current;
-                batteryVoltage = voltage;
+                    batteryChargeRemaining = chargeRemaining;
+                    batteryChargeRemainingInPercent = chargeRemainingInPercent;
+                    batteryCurrent = current;
+                    batteryVoltage = voltage;
+                }
             }
         });
     }

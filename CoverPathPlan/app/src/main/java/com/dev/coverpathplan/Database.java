@@ -74,8 +74,6 @@ public class Database {
 
     void pathRecord(FlightState flightState, int chargeRemaining, int chargeRemainingInPercent, int voltage, int current) {
         String h = cover.child("path").push().getKey();
-        if (h == null)
-            h = cover.child("path").push().getKey();
         path = cover.child("path").child(h);
 
         if (path == null)
