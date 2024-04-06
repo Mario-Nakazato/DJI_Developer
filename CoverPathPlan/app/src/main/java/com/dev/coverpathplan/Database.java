@@ -50,7 +50,7 @@ public class Database {
     }
 
     void planningRecord(List<LatLng> vertex, double bearing, float speed, int finishedAction, String algorithm,
-                        boolean isTakePhoto, double gsdLargura, double gsdAltura, double overlapLargura,
+                        boolean isTakePhoto, String aspectRatio, double gsdLargura, double gsdAltura, double overlapLargura,
                         double overlapAltura, double footprintLargura, double footprintAltura) {
         if (planning == null)
             return;
@@ -62,6 +62,7 @@ public class Database {
         dataMap.put("finishedAction", finishedAction);
         dataMap.put("algorithm", algorithm);
         dataMap.put("isTakePhoto", isTakePhoto);
+        dataMap.put("aspectRatio", aspectRatio);
         dataMap.put("gsdLargura", gsdLargura);
         dataMap.put("gsdAltura", gsdAltura);
         dataMap.put("overlapLargura", overlapLargura);

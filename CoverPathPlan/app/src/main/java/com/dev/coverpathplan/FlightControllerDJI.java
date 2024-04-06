@@ -41,15 +41,6 @@ public class FlightControllerDJI {
                 mFlightController = ((Aircraft) mProduct).getFlightController();
                 if (isSimulating)
                     mFlightControllerSimulator = mFlightController.getSimulator();
-                mProduct.getGimbal()
-                        .rotate(new Rotation.Builder().pitch(-90)
-                                .mode(RotationMode.ABSOLUTE_ANGLE)
-                                .yaw(Rotation.NO_ROTATION)
-                                .roll(Rotation.NO_ROTATION)
-                                .build(), null);
-                mProduct.getCamera().setOrientation(SettingsDefinitions.Orientation.LANDSCAPE, null);
-                mProduct.getCamera().setPhotoAspectRatio(SettingsDefinitions.PhotoAspectRatio.RATIO_4_3, null);
-                mProduct.getCamera().setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, null);
             }
         } else {
             return false;

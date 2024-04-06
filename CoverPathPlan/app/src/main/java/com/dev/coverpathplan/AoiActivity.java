@@ -57,7 +57,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             tDistanceTraveled, tBearing, tInitialDateTime, tCurrentDateTime, tFinalDateTime, tElapsedTime,
             tvelocityAverageX, tvelocityAverageY, tvelocityAverageZ, tvelocityAverage, tChargeRemaining,
             tChargeRemainingInPercent, tCurrent, tVoltage, tChargeConsumption, tChargeConsumptionInPercent;
-    private RadioGroup rgSpeed, rgActionAfterFinished, rgAlgorithm, rgPhoto, rgRec;
+    private RadioGroup rgSpeed, rgActionAfterFinished, rgAlgorithm, rgPhoto, rgRec, rgAspectRadio;
     private LinearLayout lSettings, lMetrics, lStatus;
     private AlertDialog adSetting, adMetrics, adStatus;
     private Marker markerSelected;
@@ -81,6 +81,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private MissionOperatorDJICallback missionCallback;
     private BatteryStateCallback batteryCallback;
     private Battery battery;
+    private Camera camera;
     private Fork graph;
     private FlightState vant;
     private Database realtime;
@@ -124,6 +125,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         realtime = new Database(getDatabase().getReference());
         realtime.updateCoveragePaths();
         battery = new Battery();
+        camera = new Camera();
         updateDroneLocation = (FlightState flightState) -> runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -222,7 +224,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                             if (isRecording)
                                 realtime.planningRecord(aoi.getAoiVertex(), mBearingLargura, mSpeed, mFinishedAction,
                                         algorithm == 0 ? "Boustrophedon Cellular Decomposition" : "Spanning Tree Coverage",
-                                        mission.isTakePhoto(), CaptureArea.getGsdLargura(), CaptureArea.getGsdAltura(),
+                                        mission.isTakePhoto(), camera.getAspectRadio() == 0 ? "4:3" : "16:9",
+                                        CaptureArea.getGsdLargura(), CaptureArea.getGsdAltura(),
                                         CaptureArea.getOverlapLargura(), CaptureArea.getOverlapAltura(),
                                         CaptureArea.getFootprintLargura(), CaptureArea.getFootprintAltura()
                                 );
@@ -469,6 +472,11 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 mission.setTakePhoto(true);
             else if (checkedId == R.id.no)
                 mission.setTakePhoto(false);
+        } else if (id == R.id.aspectRatio) {
+            if (checkedId == R.id.radio4_3)
+                camera.setPhotoAspectRatio(0);
+            else if (checkedId == R.id.radio16_9)
+                camera.setPhotoAspectRatio(1);
         }
     }
 
@@ -498,11 +506,13 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         rgAlgorithm = lSettings.findViewById(R.id.algorithm);
         rgPhoto = lSettings.findViewById(R.id.takePhoto);
         rgRec = lSettings.findViewById(R.id.record);
+        rgAspectRadio = lSettings.findViewById(R.id.aspectRatio);
         rgSpeed.setOnCheckedChangeListener(this);
         rgActionAfterFinished.setOnCheckedChangeListener(this);
         rgAlgorithm.setOnCheckedChangeListener(this);
         rgPhoto.setOnCheckedChangeListener(this);
         rgRec.setOnCheckedChangeListener(this);
+        rgAspectRadio.setOnCheckedChangeListener(this);
 
         adSetting = new AlertDialog.Builder(this)
                 .setTitle("")
@@ -702,8 +712,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
 
         // Definir opção de tirar foto com base no valor de mission.isTakePhoto()
         rgPhoto.check(mission.isTakePhoto() ? R.id.yes : R.id.no);
-
         rgRec.check(isRecording ? R.id.yesRecord : R.id.noRecord);
+        rgAspectRadio.check(camera.getAspectRadio() == 0 ? R.id.radio4_3 : R.id.radio16_9);
 
         adSetting.show();
     }
@@ -782,6 +792,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         if (isConnected) {
             mission.setMissionOperator(MainActivity.getMissionOperatorInstance(), missionCallback);
             battery.setProduct(MainActivity.getProductInstance(), batteryCallback);
+            camera.setProduct(MainActivity.getProductInstance());
         }
         return isConnected;
     }
