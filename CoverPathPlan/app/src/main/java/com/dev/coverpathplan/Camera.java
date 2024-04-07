@@ -16,6 +16,7 @@ public class Camera {
             mProduct.getCamera().setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, null);
             setPhotoAspectRatio(0);
             setOrientation(0);
+            setGimbal();
         }
         return mProduct != null;
     }
@@ -26,7 +27,6 @@ public class Camera {
         mAspectRadio = aspectRatio;
         mProduct.getCamera().setPhotoAspectRatio(mAspectRadio == 0 ? SettingsDefinitions.PhotoAspectRatio.RATIO_4_3 :
                 SettingsDefinitions.PhotoAspectRatio.RATIO_16_9, null);
-        setGimbal();
     }
 
     int getAspectRadio() {
@@ -38,7 +38,6 @@ public class Camera {
             return;
         mProduct.getCamera().setOrientation(orientation == 0 ? SettingsDefinitions.Orientation.LANDSCAPE :
                 SettingsDefinitions.Orientation.PORTRAIT, null);
-        setGimbal();
     }
 
     private void setGimbal() {

@@ -8,12 +8,6 @@
     android:layout_marginBottom="16dp"
     android:orientation="vertical">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Status de Voo em Tempo Real"
-        android:textAlignment="center" />
-
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -23,6 +17,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="Status de Voo em Tempo Real"
+                android:textAlignment="center" />
 
             <TextView
                 android:id="@+id/initialDateTime"
@@ -173,6 +173,8 @@
                 android:layout_marginRight="16dp"
                 android:layout_marginBottom="8dp"
                 android:text="Consumo de energia: - %" />
+
+            <include layout="@layout/dialog_metrics" />
         </LinearLayout>
     </ScrollView>
 

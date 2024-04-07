@@ -56,19 +56,21 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private TextView tPathDistance, tPathDistanceDJI, tEstimatedTime, tEstimatedTimeDJI, tQuantityPhoto,
             tDistanceTraveled, tBearing, tInitialDateTime, tCurrentDateTime, tFinalDateTime, tElapsedTime,
             tvelocityAverageX, tvelocityAverageY, tvelocityAverageZ, tvelocityAverage, tChargeRemaining,
-            tChargeRemainingInPercent, tCurrent, tVoltage, tChargeConsumption, tChargeConsumptionInPercent;
+            tChargeRemainingInPercent, tCurrent, tVoltage, tChargeConsumption, tChargeConsumptionInPercent,
+            tPathDistanceMetrics, tPathDistanceDJIMetrics, tEstimatedTimeMetrics, tEstimatedTimeDJIMetrics,
+            tQuantityPhotoMetrics, tBearingMetrics;
     private RadioGroup rgSpeed, rgActionAfterFinished, rgAlgorithm, rgPhoto, rgRec, rgAspectRadio;
     private LinearLayout lSettings, lMetrics, lStatus;
     private AlertDialog adSetting, adMetrics, adStatus;
     private Marker markerSelected;
-    private int adding = 0, mFinishedAction = 1, algorithm = 0, quantityPhoto,
+    private int adding = 0, mFinishedAction = 1, algorithm = 0, quantityPhoto = 0,
             batteryChargeRemaining, batteryChargeRemainingInPercent, batteryVoltage, batteryCurrent,
             batteryChargeConsumption = 0, batteryChargeConsumptionInPercent = 0;
     private boolean isSimulating = false, isCovering = false, isRecording = true;
-    private float mSpeed = 4.0f, velocityN = 0, velocityX = 0, velocityY = 0, velocityZ = 0,
+    private float mSpeed = 2.0f, velocityN = 0, velocityX = 0, velocityY = 0, velocityZ = 0,
             velocityAverageX = 0, velocityAverageY = 0, velocityAverageZ = 0, velocityAverage = 0;
-    private double distanceTraveled = 0, pathDistance, pathDistanceDJI;
-    private String estimatedTime, estimatedTimeDJI, initialDateTime = "dd/MM/yyyy HH:mm:ss.SSS",
+    private double distanceTraveled = 0, pathDistance = 0, pathDistanceDJI = 0;
+    private String estimatedTime = "HH:mm:ss.SSS", estimatedTimeDJI = "HH:mm:ss.SSS", initialDateTime = "dd/MM/yyyy HH:mm:ss.SSS",
             currentDateTime = "dd/MM/yyyy HH:mm:ss.SSS", finalDateTime = "dd/MM/yyyy HH:mm:ss.SSS",
             elapsedTime = "HH:mm:ss.SSS";
     private DecimalFormat decimalFormatter = new DecimalFormat("0.00");
@@ -144,7 +146,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                     velocityAverageX = velocityX / velocityN;
                     velocityAverageY = velocityY / velocityN;
                     velocityAverageZ = velocityZ / velocityN;
-                    velocityAverage = (float) Math.sqrt(velocityX * velocityX + velocityY * velocityY + velocityZ * velocityZ);
+                    velocityAverage = (float) Math.sqrt(velocityAverageX * velocityAverageX + velocityAverageY * velocityAverageY + velocityAverageZ * velocityAverageZ);
+
 
                     if (isRecording) {
                         realtime.pathRecord(flightState.clone(), batteryChargeRemaining,
@@ -460,6 +463,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 mSpeed = 4.0f;
             else if (checkedId == R.id.highSpeed)
                 mSpeed = 8.0f;
+            else if (checkedId == R.id.veryHighSpeed)
+                mSpeed = 15.0f;
         } else if (id == R.id.actionAfterFinished) {
             if (checkedId == R.id.finishNone)
                 mFinishedAction = 0;
@@ -579,6 +584,12 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         tVoltage = lStatus.findViewById(R.id.voltage);
         tChargeConsumption = lStatus.findViewById(R.id.chargeConsumption);
         tChargeConsumptionInPercent = lStatus.findViewById(R.id.chargeConsumptionInPercent);
+        tPathDistanceMetrics = lStatus.findViewById(R.id.pathDistance);
+        tPathDistanceDJIMetrics = lStatus.findViewById(R.id.pathDistanceDJI);
+        tEstimatedTimeMetrics = lStatus.findViewById(R.id.estimatedTime);
+        tEstimatedTimeDJIMetrics = lStatus.findViewById(R.id.estimatedTimeDJI);
+        tQuantityPhotoMetrics = lStatus.findViewById(R.id.quantityPhoto);
+        tBearingMetrics = lStatus.findViewById(R.id.bearing);
 
         adStatus = new AlertDialog.Builder(this)
                 .setTitle("")
@@ -690,6 +701,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             rgSpeed.check(R.id.midSpeed);
         else if (mSpeed == 8.0f)
             rgSpeed.check(R.id.highSpeed);
+        else if (mSpeed == 15.0f)
+            rgSpeed.check(R.id.veryHighSpeed);
 
         // Definir opção de ação após finalizar com base no valor de mFinishedAction
         switch (mFinishedAction) {
@@ -758,6 +771,13 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         tVoltage.setText("Tensão: " + batteryVoltage + " mV");
         tChargeConsumption.setText("Consumo de energia: " + batteryChargeConsumption + " mAh");
         tChargeConsumptionInPercent.setText("Consumo de energia: " + batteryChargeConsumptionInPercent + " %");
+
+        tPathDistanceMetrics.setText("Distância total do caminho: " + decimalFormatter.format(pathDistance) + " m");
+        tPathDistanceDJIMetrics.setText("Distância total do caminho (DJI): " + decimalFormatter.format(pathDistanceDJI) + " m");
+        tEstimatedTimeMetrics.setText("Tempo total: " + estimatedTime);
+        tEstimatedTimeDJIMetrics.setText("Tempo total (DJI): " + estimatedTimeDJI);
+        tQuantityPhotoMetrics.setText("Quantidade de fotos: " + quantityPhoto);
+        tBearingMetrics.setText("Rumo: " + mBearingLargura + " º");
     }
 
     private void showStatusDialog() {
