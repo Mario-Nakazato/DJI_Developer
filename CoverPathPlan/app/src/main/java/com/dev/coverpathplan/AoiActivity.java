@@ -662,6 +662,9 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         if (!mission.setPathWaypoint(aoi.getPathPoint(), (int) bearing))
             return;
 
+        pathDistanceDJI = mission.calculateTotalDistance();
+        estimatedTimeDJI = convertingDoubleToHoursMinutesSecondsMilliseconds(mission.calculateTotalTime().longValue());
+
         DJIError error = mission.loadMission(mFinishedAction, mSpeed);
         if (error == null) {
             mission.uploadMission();
@@ -701,6 +704,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             bearing = mBearingLargura;
             if (camera.getOrientation() == 1)
                 bearing -= 90;
+
+            pathDistance = calculateTotalDistance(aoi.getPathPoint());
+            estimatedTime = convertingDoubleToHoursMinutesSecondsMilliseconds((long) (4.2 * calculateTotalDistance(aoi.getPathPoint()) / mSpeed));
+            quantityPhoto = aoi.getGridPoints().size();
 
             aoi.setPathPlanning();
             aoi.setInitialPath();
@@ -755,12 +762,6 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void showMetricsDialog() {
-        pathDistance = calculateTotalDistance(aoi.getPathPoint());
-        pathDistanceDJI = mission.calculateTotalDistance();
-        estimatedTime = convertingDoubleToHoursMinutesSecondsMilliseconds((long) (4.2 * calculateTotalDistance(aoi.getPathPoint()) / mSpeed));
-        estimatedTimeDJI = convertingDoubleToHoursMinutesSecondsMilliseconds(mission.calculateTotalTime().longValue());
-        quantityPhoto = mission.getWaypointCount();
-
         tPathDistance.setText("Distância total do caminho: " + decimalFormatter.format(pathDistance) + " m");
         tPathDistanceDJI.setText("Distância total do caminho (DJI): " + decimalFormatter.format(pathDistanceDJI) + " m");
         tEstimatedTime.setText("Tempo total: " + estimatedTime);
