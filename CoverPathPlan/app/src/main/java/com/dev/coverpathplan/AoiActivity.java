@@ -59,7 +59,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             tChargeRemainingInPercent, tCurrent, tVoltage, tChargeConsumption, tChargeConsumptionInPercent,
             tPathDistanceMetrics, tPathDistanceDJIMetrics, tEstimatedTimeMetrics, tEstimatedTimeDJIMetrics,
             tQuantityPhotoMetrics, tBearingMetrics;
-    private RadioGroup rgSpeed, rgActionAfterFinished, rgAlgorithm, rgPhoto, rgRec, rgAspectRadio;
+    private RadioGroup rgSpeed, rgActionAfterFinished, rgAlgorithm, rgPhoto, rgRec, rgAspectRadio, rgOrientation;
     private LinearLayout lSettings, lMetrics, lStatus;
     private AlertDialog adSetting, adMetrics, adStatus;
     private Marker markerSelected;
@@ -69,7 +69,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private boolean isSimulating = false, isCovering = false, isRecording = true;
     private float mSpeed = 2.0f, velocityN = 0, velocityX = 0, velocityY = 0, velocityZ = 0,
             velocityAverageX = 0, velocityAverageY = 0, velocityAverageZ = 0, velocityAverage = 0;
-    private double distanceTraveled = 0, pathDistance = 0, pathDistanceDJI = 0;
+    private double bearing = 0, distanceTraveled = 0, pathDistance = 0, pathDistanceDJI = 0;
     private String estimatedTime = "HH:mm:ss.SSS", estimatedTimeDJI = "HH:mm:ss.SSS", initialDateTime = "dd/MM/yyyy HH:mm:ss.SSS",
             currentDateTime = "dd/MM/yyyy HH:mm:ss.SSS", finalDateTime = "dd/MM/yyyy HH:mm:ss.SSS",
             elapsedTime = "HH:mm:ss.SSS";
@@ -228,7 +228,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                             batteryChargeConsumptionInPercent = 0;
 
                             if (isRecording)
-                                realtime.planningRecord(aoi.getAoiVertex(), mBearingLargura, mSpeed, mFinishedAction,
+                                realtime.planningRecord(aoi.getAoiVertex(), bearing, mSpeed, mFinishedAction,
                                         algorithm == 0 ? "Boustrophedon Cellular Decomposition" : "Spanning Tree Coverage",
                                         mission.isTakePhoto(), camera.getAspectRadio() == 0 ? "4:3" : "16:9",
                                         CaptureArea.getGsdLargura(), CaptureArea.getGsdAltura(),
@@ -489,6 +489,11 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 camera.setPhotoAspectRatio(0);
             else if (checkedId == R.id.radio16_9)
                 camera.setPhotoAspectRatio(1);
+        } else if (id == R.id.orientation) {
+            if (checkedId == R.id.landscape)
+                camera.setOrientation(0);
+            else if (checkedId == R.id.portrait)
+                camera.setOrientation(1);
         }
     }
 
@@ -519,12 +524,14 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         rgPhoto = lSettings.findViewById(R.id.takePhoto);
         rgRec = lSettings.findViewById(R.id.record);
         rgAspectRadio = lSettings.findViewById(R.id.aspectRatio);
+        rgOrientation = lSettings.findViewById(R.id.orientation);
         rgSpeed.setOnCheckedChangeListener(this);
         rgActionAfterFinished.setOnCheckedChangeListener(this);
         rgAlgorithm.setOnCheckedChangeListener(this);
         rgPhoto.setOnCheckedChangeListener(this);
         rgRec.setOnCheckedChangeListener(this);
         rgAspectRadio.setOnCheckedChangeListener(this);
+        rgOrientation.setOnCheckedChangeListener(this);
 
         adSetting = new AlertDialog.Builder(this)
                 .setTitle("")
@@ -647,8 +654,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             return;
         }
 
-
-        if (!mission.setPathWaypoint(aoi.getPathPoint()))
+        if (!mission.setPathWaypoint(aoi.getPathPoint(), (int) bearing))
             return;
 
         DJIError error = mission.loadMission(mFinishedAction, mSpeed);
@@ -686,6 +692,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 gs = graph.pathGraph(gs);
                 aoi.setGrid(gcgu.nodeToLatLng(gs.nodes));
             }
+
+            bearing = mBearingLargura;
+            if (camera.getOrientation() == 1)
+                bearing -= 90;
 
             aoi.setPathPlanning();
             aoi.setInitialPath();
@@ -734,14 +744,15 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         rgPhoto.check(mission.isTakePhoto() ? R.id.yes : R.id.no);
         rgRec.check(isRecording ? R.id.yesRecord : R.id.noRecord);
         rgAspectRadio.check(camera.getAspectRadio() == 0 ? R.id.radio4_3 : R.id.radio16_9);
+        rgOrientation.check(camera.getOrientation() == 0 ? R.id.landscape : R.id.portrait);
 
         adSetting.show();
     }
 
     private void showMetricsDialog() {
-        pathDistance = calculateTotalDistance(aoi.getGridPoints());
+        pathDistance = calculateTotalDistance(aoi.getPathPoint());
         pathDistanceDJI = mission.calculateTotalDistance();
-        estimatedTime = convertingDoubleToHoursMinutesSecondsMilliseconds((long) (4.2 * calculateTotalDistance(aoi.getGridPoints()) / mSpeed));
+        estimatedTime = convertingDoubleToHoursMinutesSecondsMilliseconds((long) (4.2 * calculateTotalDistance(aoi.getPathPoint()) / mSpeed));
         estimatedTimeDJI = convertingDoubleToHoursMinutesSecondsMilliseconds(mission.calculateTotalTime().longValue());
         quantityPhoto = mission.getWaypointCount();
 
@@ -750,7 +761,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         tEstimatedTime.setText("Tempo total: " + estimatedTime);
         tEstimatedTimeDJI.setText("Tempo total (DJI): " + estimatedTimeDJI);
         tQuantityPhoto.setText("Quantidade de fotos: " + quantityPhoto);
-        tBearing.setText("Rumo: " + mBearingLargura + " º");
+        tBearing.setText("Rumo: " + bearing + " º");
 
         adMetrics.show();
     }
@@ -777,7 +788,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         tEstimatedTimeMetrics.setText("Tempo total: " + estimatedTime);
         tEstimatedTimeDJIMetrics.setText("Tempo total (DJI): " + estimatedTimeDJI);
         tQuantityPhotoMetrics.setText("Quantidade de fotos: " + quantityPhoto);
-        tBearingMetrics.setText("Rumo: " + mBearingLargura + " º");
+        tBearingMetrics.setText("Rumo: " + bearing + " º");
     }
 
     private void showStatusDialog() {

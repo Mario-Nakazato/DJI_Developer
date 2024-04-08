@@ -7,7 +7,7 @@ import dji.sdk.base.BaseProduct;
 
 public class Camera {
     private BaseProduct mProduct;
-    private int mAspectRadio = 0;
+    private int mAspectRadio = 0, mOrientation = 0;
 
     boolean setProduct(BaseProduct Baseproduct) {
         mProduct = Baseproduct;
@@ -36,8 +36,13 @@ public class Camera {
     void setOrientation(int orientation) {
         if (mProduct == null)
             return;
-        mProduct.getCamera().setOrientation(orientation == 0 ? SettingsDefinitions.Orientation.LANDSCAPE :
+        mOrientation = orientation;
+        mProduct.getCamera().setOrientation(mOrientation == 0 ? SettingsDefinitions.Orientation.LANDSCAPE :
                 SettingsDefinitions.Orientation.PORTRAIT, null);
+    }
+
+    int getOrientation() {
+        return mOrientation;
     }
 
     private void setGimbal() {

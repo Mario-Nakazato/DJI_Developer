@@ -48,8 +48,8 @@ public class MissionOperatorDJI {
     MissionOperatorDJI() {
         pathWaypoint = new ArrayList<>();
         waypointMissionBuilder = new WaypointMission.Builder();
-        actionPhoto = new WaypointAction(WaypointActionType.START_TAKE_PHOTO, 1);
-        actionStay = new WaypointAction(WaypointActionType.STAY, 1);
+        actionPhoto = new WaypointAction(WaypointActionType.START_TAKE_PHOTO, 4);
+        actionStay = new WaypointAction(WaypointActionType.STAY, 2);
     }
 
     boolean setMissionOperator(WaypointMissionOperator WaypointMissionOperator, MissionOperatorDJICallback missionOperatorDJICallback) {
@@ -91,7 +91,7 @@ public class MissionOperatorDJI {
         }
     }
 
-    boolean setPathWaypoint(List<LatLng> path) {
+    boolean setPathWaypoint(List<LatLng> path, int bearing) {
         if (missionOperator == null || path.isEmpty())
             return false;
 
@@ -100,7 +100,7 @@ public class MissionOperatorDJI {
         }
         pathWaypoint.clear();
         try {
-            actionRotate = new WaypointAction(WaypointActionType.ROTATE_AIRCRAFT, ((int) GeoCalcGeodeticUtils.mBearingLargura + 180) % 360 - 180);
+            actionRotate = new WaypointAction(WaypointActionType.ROTATE_AIRCRAFT, (bearing + 180) % 360 - 180);
             for (LatLng waypoint : path) {
                 Waypoint mWaypoint = new Waypoint(waypoint.latitude, waypoint.longitude, (float) CaptureArea.getAltitude());
                 if (pathWaypoint.isEmpty())
