@@ -14,29 +14,31 @@ public class Camera {
 
         if (mProduct != null && mProduct.isConnected()) {
             mProduct.getCamera().setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, null);
-            setPhotoAspectRatio(0);
-            setOrientation(0);
+            setPhotoAspectRatio(mAspectRadio);
+            setOrientation(mOrientation);
             setGimbal();
         }
         return mProduct != null;
     }
 
     void setPhotoAspectRatio(int aspectRatio) {
+        mAspectRadio = aspectRatio;
         if (mProduct == null)
             return;
-        mAspectRadio = aspectRatio;
+
         mProduct.getCamera().setPhotoAspectRatio(mAspectRadio == 0 ? SettingsDefinitions.PhotoAspectRatio.RATIO_4_3 :
                 SettingsDefinitions.PhotoAspectRatio.RATIO_16_9, null);
     }
 
-    int getAspectRadio() {
+    int getPhotoAspectRatio() {
         return mAspectRadio;
     }
 
     void setOrientation(int orientation) {
+        mOrientation = orientation;
         if (mProduct == null)
             return;
-        mOrientation = orientation;
+
         mProduct.getCamera().setOrientation(mOrientation == 0 ? SettingsDefinitions.Orientation.LANDSCAPE :
                 SettingsDefinitions.Orientation.PORTRAIT, null);
     }

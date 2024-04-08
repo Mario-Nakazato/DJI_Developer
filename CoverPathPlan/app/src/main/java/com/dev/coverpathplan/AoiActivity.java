@@ -230,7 +230,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                             if (isRecording)
                                 realtime.planningRecord(aoi.getAoiVertex(), bearing, mSpeed, mFinishedAction,
                                         algorithm == 0 ? "Boustrophedon Cellular Decomposition" : "Spanning Tree Coverage",
-                                        mission.isTakePhoto(), camera.getAspectRadio() == 0 ? "4:3" : "16:9",
+                                        mission.isTakePhoto(), camera.getPhotoAspectRatio() == 0 ? "4:3" : "16:9",
                                         CaptureArea.getGsdLargura(), CaptureArea.getGsdAltura(),
                                         CaptureArea.getOverlapLargura(), CaptureArea.getOverlapAltura(),
                                         CaptureArea.getFootprintLargura(), CaptureArea.getFootprintAltura()
@@ -484,6 +484,11 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 mission.setTakePhoto(true);
             else if (checkedId == R.id.no)
                 mission.setTakePhoto(false);
+        } else if (id == R.id.record) {
+            if (checkedId == R.id.yesRecord)
+                isRecording = true;
+            else if (checkedId == R.id.noRecord)
+                isRecording = false;
         } else if (id == R.id.aspectRatio) {
             if (checkedId == R.id.radio4_3)
                 camera.setPhotoAspectRatio(0);
@@ -743,7 +748,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         // Definir opção de tirar foto com base no valor de mission.isTakePhoto()
         rgPhoto.check(mission.isTakePhoto() ? R.id.yes : R.id.no);
         rgRec.check(isRecording ? R.id.yesRecord : R.id.noRecord);
-        rgAspectRadio.check(camera.getAspectRadio() == 0 ? R.id.radio4_3 : R.id.radio16_9);
+        rgAspectRadio.check(camera.getPhotoAspectRatio() == 0 ? R.id.radio4_3 : R.id.radio16_9);
         rgOrientation.check(camera.getOrientation() == 0 ? R.id.landscape : R.id.portrait);
 
         adSetting.show();
