@@ -150,7 +150,6 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
-        // Verifica e solicita permissões se necessário
         checkAndRequestPermissions();
     }
 
@@ -171,28 +170,24 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permissões concedidas
                 checkAndRequestPermissions();
                 showToast("Permissões concedidas");
-            } else {
-                // Permissões negadas
+            } else
                 showToast("Permissões negadas");
-            }
         }
     }
 
     private void checkAndRequestPermissions() {
         // Verificar permissões
         List<String> missingPermission = new ArrayList<>();
-        for (String eachPermission : REQUIRED_PERMISSION_LIST) {
-            if (ContextCompat.checkSelfPermission(this, eachPermission) != PackageManager.PERMISSION_GRANTED) {
+        for (String eachPermission : REQUIRED_PERMISSION_LIST)
+            if (ContextCompat.checkSelfPermission(this, eachPermission) != PackageManager.PERMISSION_GRANTED)
                 missingPermission.add(eachPermission);
-            }
-        }
+
         // Solicitar permissões ausentes
-        if (missingPermission.isEmpty()) {
+        if (missingPermission.isEmpty())
             DJISDKManager.getInstance().registerApp(getApplicationContext(), mDJISDKManagerCallback);
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             ActivityCompat.requestPermissions(this,
                     missingPermission.toArray(new String[missingPermission.size()]),
                     REQUEST_PERMISSION_CODE);
@@ -211,9 +206,8 @@ public class MainActivity extends AppCompatActivity {
                 if (status != ConnectionResult.SUCCESS) {
                     googleApiAvailability.getErrorDialog(MainActivity.this, status, 0).show();
                     showToast("Não é possível executar sem o Google Play, verifique!");
-                } else {
+                } else
                     openAoiActivity();
-                }
             }
         });
 
@@ -244,11 +238,10 @@ public class MainActivity extends AppCompatActivity {
             String str = mProduct instanceof Aircraft ? "Aeronave DJI" : "Dispositivo portátil DJI";
             mTextConnectionStatus.setText("Status: " + str + " conectado");
 
-            if (null != mProduct.getModel()) {
+            if (null != mProduct.getModel())
                 mTextProduct.setText(mProduct.getModel().getDisplayName());
-            } else {
+            else
                 mTextProduct.setText("Modelo");
-            }
             bMap.setEnabled(true);
         } else {
             if (mProduct instanceof Aircraft) {
@@ -267,17 +260,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public static synchronized BaseProduct getProductInstance() {
-        if (null == mProduct) {
+        if (null == mProduct)
             mProduct = DJISDKManager.getInstance().getProduct();
-        }
         return mProduct;
     }
 
     public static synchronized WaypointMissionOperator getMissionOperatorInstance() {
         if (mMissionOperator == null) {
-            if (DJISDKManager.getInstance().getMissionControl() != null) {
+            if (DJISDKManager.getInstance().getMissionControl() != null)
                 mMissionOperator = DJISDKManager.getInstance().getMissionControl().getWaypointMissionOperator();
-            }
         }
         return mMissionOperator;
     }

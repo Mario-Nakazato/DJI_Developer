@@ -19,13 +19,10 @@ public class GsdActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gsd);
 
-        // Inicializar os TextViews
         initTextViews();
 
-        // Atualizar os valores iniciais
         updateValues(null);
 
-        // Adicionar listeners de texto
         addTextListeners();
     }
 
@@ -51,7 +48,7 @@ public class GsdActivity extends AppCompatActivity {
     }
 
     private void updateValues(TextView excludedTextView) {
-        CaptureArea.printGSD();
+        //CaptureArea.printGSD();
         if (textAltitude != excludedTextView) textAltitude.setText(String.valueOf(CaptureArea.getAltitude()));
         if (textGsdLarCm != excludedTextView) textGsdLarCm.setText(String.valueOf(CaptureArea.getGsdLarguraCm()));
         if (textGsdAltCm != excludedTextView) textGsdAltCm.setText(String.valueOf(CaptureArea.getGsdAlturaCm()));

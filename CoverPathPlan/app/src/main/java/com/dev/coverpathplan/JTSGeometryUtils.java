@@ -17,17 +17,15 @@ public class JTSGeometryUtils {
 
     List<Coordinate> LatLngToCoordinate(List<LatLng> vertices) {
         List<Coordinate> coors = new ArrayList<>();
-        for (LatLng vertex : vertices) {
+        for (LatLng vertex : vertices)
             coors.add(new Coordinate(vertex.longitude, vertex.latitude));
-        }
         return coors;
     }
 
     List<LatLng> CoordinateToLatLng(Coordinate[] coors) {
         List<LatLng> vertices = new ArrayList<>();
-        for (Coordinate coor : coors) {
+        for (Coordinate coor : coors)
             vertices.add(new LatLng(coor.y, coor.x));
-        }
         return vertices;
     }
 
@@ -36,9 +34,8 @@ public class JTSGeometryUtils {
             return null;
 
         // Garanta que a lista de coordenadas seja fechada
-        if (!coors.get(0).equals(coors.get(coors.size() - 1))) {
+        if (!coors.get(0).equals(coors.get(coors.size() - 1)))
             coors.add(coors.get(0));
-        }
 
         // Criar um anel linear com as coordenadas
         Coordinate[] coordArray = coors.toArray(new Coordinate[coors.size()]);
@@ -61,6 +58,7 @@ public class JTSGeometryUtils {
         List<Coordinate> coors = LatLngToCoordinate(polygonVertices);
         Polygon polygon = createPolygon(coors);
         Coordinate[] diametroMinimo = getMinimumRectangle(polygon);
+
         return new ArrayList<>(CoordinateToLatLng(diametroMinimo));
     }
 
@@ -75,10 +73,8 @@ public class JTSGeometryUtils {
         for (LatLng point : points) {
             Coordinate pontoDentro = new Coordinate(point.longitude, point.latitude);
             Point ponto = geometryFactory.createPoint(pontoDentro);
-            // Verificando se o ponto está dentro do polígono
-            if (polygon.contains(ponto)) {
+            if (polygon.contains(ponto))
                 pointsInside.add(point);
-            }
         }
         return pointsInside;
     }
@@ -94,10 +90,8 @@ public class JTSGeometryUtils {
         for (LatLng point : points) {
             Coordinate pontoDentro = new Coordinate(point.longitude, point.latitude);
             Point ponto = geometryFactory.createPoint(pontoDentro);
-            // Verificando se o ponto está fora do polígono (negando a condição original)
-            if (!polygon.contains(ponto)) {
+            if (!polygon.contains(ponto))
                 pointsOutside.add(point);
-            }
         }
         return pointsOutside;
     }

@@ -59,9 +59,8 @@ public class GeoCalcGeodeticUtils {
 
     List<Point> LatLngToPoint(List<LatLng> vertices) {
         List<Point> points = new ArrayList<>();
-        for (LatLng vertex : vertices) {
+        for (LatLng vertex : vertices)
             points.add(Point.at(Coordinate.fromDegrees(vertex.latitude), Coordinate.fromDegrees(vertex.longitude)));
-        }
         return points;
     }
 
@@ -76,7 +75,7 @@ public class GeoCalcGeodeticUtils {
         //Point coor3 = coors.get(2);
         Point coor4 = coors.get(3);
 
-        Log.v("Grid", "Grid:");
+        //Log.v("Grid", "Grid:");
 
         double offsetLargura = 0.5; // Deslocamento da posição
         double offsetAltura = 0.5;
@@ -113,15 +112,15 @@ public class GeoCalcGeodeticUtils {
             for (int i2 = 0; i2 <= nRealFootprintAltura; i2++) {
                 Point currentCoorAltura = EarthCalc.gcd.pointAt(currentCoorLargura, bearingLargura, currentDistanceLargura);
                 cells.add(new LatLng(currentCoorAltura.latitude, currentCoorAltura.longitude));
-                Log.v("Grid", "currentDistanceLargura: " + currentDistanceLargura);
+                //Log.v("Grid", "currentDistanceLargura: " + currentDistanceLargura);
                 currentDistanceLargura += distanceBetweenFootprintAltura;
             }
-            Log.v("Grid", "currentDistanceAltura: " + currentDistanceAltura);
+            //Log.v("Grid", "currentDistanceAltura: " + currentDistanceAltura);
             currentDistanceAltura += distanceBetweenFootprintLargura;
         }
 
         // Bloco de log para todas as variáveis
-        Log.v("Grid", "offsetAltura: " + offsetAltura + " %");
+        /*Log.v("Grid", "offsetAltura: " + offsetAltura + " %");
         Log.v("Grid", "overlapAltura: " + overlapAltura + " %?");
         Log.v("Grid", "bearingAltura: " + bearingAltura + " °");
         Log.v("Grid", "lengthAltura: " + lengthAltura + " m");
@@ -151,7 +150,7 @@ public class GeoCalcGeodeticUtils {
                 + (1 - usefulFootprintLargura / CaptureArea.getFootprintLargura()) * 100 + " %");
         Log.v("Grid Overlap", "OverlapAltura: "
                 + usefulFootprintAltura / CaptureArea.getFootprintAltura() * 100 + " % "
-                + (1 - usefulFootprintAltura / CaptureArea.getFootprintAltura()) * 100 + " %");
+                + (1 - usefulFootprintAltura / CaptureArea.getFootprintAltura()) * 100 + " %");*/
         return cells;
     }
 
@@ -165,7 +164,7 @@ public class GeoCalcGeodeticUtils {
         //Point coor3 = coors.get(2);
         Point coor4 = coors.get(3);
 
-        Log.v("Grid", "BoustrophedonGrid:");
+        //Log.v("Grid", "BoustrophedonGrid:");
 
         double offsetLargura = 0.5;
         double offsetAltura = 0.5;
@@ -201,7 +200,7 @@ public class GeoCalcGeodeticUtils {
                 for (int i2 = 0; i2 <= nRealFootprintAltura; i2++) {
                     Point currentCoorAltura = EarthCalc.gcd.pointAt(currentCoorLargura, bearingLargura, currentDistanceLargura);
                     cells.add(new LatLng(currentCoorAltura.latitude, currentCoorAltura.longitude));
-                    Log.v("Grid", "currentDistanceLargura: " + currentDistanceLargura);
+                    //Log.v("Grid", "currentDistanceLargura: " + currentDistanceLargura);
                     currentDistanceLargura += distanceBetweenFootprintAltura;
                 }
             } else { // Se a linha atual for ímpar, adicione os pontos da direita para a esquerda
@@ -209,17 +208,17 @@ public class GeoCalcGeodeticUtils {
                 for (int i2 = nRealFootprintAltura; i2 >= 0; i2--) {
                     Point currentCoorAltura = EarthCalc.gcd.pointAt(currentCoorLargura, bearingLargura, currentDistanceLargura);
                     cells.add(new LatLng(currentCoorAltura.latitude, currentCoorAltura.longitude));
-                    Log.v("Grid", "currentDistanceLargura: " + currentDistanceLargura);
+                    //Log.v("Grid", "currentDistanceLargura: " + currentDistanceLargura);
                     currentDistanceLargura -= distanceBetweenFootprintAltura;
                 }
             }
-            Log.v("Grid", "currentDistanceAltura: " + currentDistanceAltura);
+            //Log.v("Grid", "currentDistanceAltura: " + currentDistanceAltura);
             currentDistanceAltura += distanceBetweenFootprintLargura;
         }
         mBearingLargura = bearingLargura;
 
         // Bloco de log para todas as variáveis
-        Log.v("Grid", "offsetAltura: " + offsetAltura + " %");
+        /*Log.v("Grid", "offsetAltura: " + offsetAltura + " %");
         Log.v("Grid", "overlapAltura: " + overlapAltura + " %?");
         Log.v("Grid", "bearingAltura: " + bearingAltura + " °");
         Log.v("Grid", "lengthAltura: " + lengthAltura + " m");
@@ -249,7 +248,7 @@ public class GeoCalcGeodeticUtils {
                 + (1 - usefulFootprintLargura / CaptureArea.getFootprintLargura()) * 100 + " %");
         Log.v("Grid Overlap", "OverlapAltura: "
                 + usefulFootprintAltura / CaptureArea.getFootprintAltura() * 100 + " % "
-                + (1 - usefulFootprintAltura / CaptureArea.getFootprintAltura()) * 100 + " %");
+                + (1 - usefulFootprintAltura / CaptureArea.getFootprintAltura()) * 100 + " %");*/
         return cells;
     }
 
@@ -263,7 +262,7 @@ public class GeoCalcGeodeticUtils {
         //Point coor3 = coors.get(2);
         Point coor4 = coors.get(3);
 
-        Log.v("Grid", "StcGrid:");
+        //Log.v("Grid", "StcGrid:");
 
         double offsetLargura = 0.5;
         double offsetAltura = 0.5;
@@ -307,16 +306,16 @@ public class GeoCalcGeodeticUtils {
             for (int i2 = 0; i2 <= nRealFootprintAltura; i2++) {
                 Point currentCoorAltura = EarthCalc.gcd.pointAt(currentCoorLargura, bearingLargura, currentDistanceLargura);
                 row.add(new LatLng(currentCoorAltura.latitude, currentCoorAltura.longitude));
-                Log.v("Grid", "currentDistanceLargura: " + currentDistanceLargura);
+                //Log.v("Grid", "currentDistanceLargura: " + currentDistanceLargura);
                 currentDistanceLargura += distanceBetweenFootprintAltura;
             }
             cells.add(row);
-            Log.v("Grid", "currentDistanceAltura: " + currentDistanceAltura);
+            //Log.v("Grid", "currentDistanceAltura: " + currentDistanceAltura);
             currentDistanceAltura += distanceBetweenFootprintLargura;
         }
 
         // Bloco de log para todas as variáveis
-        Log.v("Grid", "offsetAltura: " + offsetAltura + " %");
+        /*Log.v("Grid", "offsetAltura: " + offsetAltura + " %");
         Log.v("Grid", "overlapAltura: " + overlapAltura + " %?");
         Log.v("Grid", "bearingAltura: " + bearingAltura + " °");
         Log.v("Grid", "lengthAltura: " + lengthAltura + " m");
@@ -346,7 +345,7 @@ public class GeoCalcGeodeticUtils {
                 + (1 - usefulFootprintLargura / CaptureArea.getFootprintLargura()) * 100 + " %");
         Log.v("Grid Overlap", "OverlapAltura: "
                 + usefulFootprintAltura / CaptureArea.getFootprintAltura() * 100 + " % "
-                + (1 - usefulFootprintAltura / CaptureArea.getFootprintAltura()) * 100 + " %");
+                + (1 - usefulFootprintAltura / CaptureArea.getFootprintAltura()) * 100 + " %");*/
 
         offsetFootprintAltura *= 2 * (distanceBetweenFootprintAltura / CaptureArea.getFootprintAltura()
                 + (1 - distanceBetweenFootprintAltura / CaptureArea.getFootprintAltura()) / 2);
@@ -373,17 +372,17 @@ public class GeoCalcGeodeticUtils {
                 node.cells.add(cells.get(i1 * 2 + 1).get(i2 * 2));
                 node.cells.add(cells.get(i1 * 2 + 1).get(i2 * 2 + 1));
                 row.add(node);
-                Log.v("Grid", "currentDistanceLargura: " + currentDistanceLargura);
+                //Log.v("Grid", "currentDistanceLargura: " + currentDistanceLargura);
                 currentDistanceLargura += distanceBetweenFootprintAltura;
             }
             nodes.add(row);
-            Log.v("Grid", "currentDistanceAltura: " + currentDistanceAltura);
+            //Log.v("Grid", "currentDistanceAltura: " + currentDistanceAltura);
             currentDistanceAltura += distanceBetweenFootprintLargura;
         }
         mBearingLargura = bearingLargura;
 
         // Bloco de log para todas as variáveis
-        Log.v("Grid", "offsetAltura: " + offsetAltura + " %");
+        /*Log.v("Grid", "offsetAltura: " + offsetAltura + " %");
         Log.v("Grid", "overlapAltura: " + overlapAltura + " %?");
         Log.v("Grid", "bearingAltura: " + bearingAltura + " °");
         Log.v("Grid", "lengthAltura: " + lengthAltura + " m");
@@ -413,7 +412,7 @@ public class GeoCalcGeodeticUtils {
                 + (1 - usefulFootprintLargura / CaptureArea.getFootprintLargura()) * 100 + " %");
         Log.v("Grid Overlap", "OverlapAltura: "
                 + usefulFootprintAltura / CaptureArea.getFootprintAltura() * 100 + " % "
-                + (1 - usefulFootprintAltura / CaptureArea.getFootprintAltura()) * 100 + " %");
+                + (1 - usefulFootprintAltura / CaptureArea.getFootprintAltura()) * 100 + " %");*/
         return nodes;
     }
 }

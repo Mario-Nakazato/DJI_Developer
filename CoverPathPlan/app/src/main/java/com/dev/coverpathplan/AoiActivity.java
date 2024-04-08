@@ -64,7 +64,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private AlertDialog adSetting, adMetrics, adStatus;
     private Marker markerSelected;
     private int adding = 0, mFinishedAction = 1, algorithm = 0, quantityPhoto = 0,
-            batteryChargeRemaining, batteryChargeRemainingInPercent, batteryVoltage, batteryCurrent,
+            batteryChargeRemaining = 0, batteryChargeRemainingInPercent = 0, batteryVoltage = 0, batteryCurrent = 0,
             batteryChargeConsumption = 0, batteryChargeConsumptionInPercent = 0;
     private boolean isSimulating = false, isCovering = false, isRecording = true;
     private float mSpeed = 2.0f, velocityN = 0, velocityX = 0, velocityY = 0, velocityZ = 0,
@@ -146,8 +146,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                     velocityAverageX = velocityX / velocityN;
                     velocityAverageY = velocityY / velocityN;
                     velocityAverageZ = velocityZ / velocityN;
-                    velocityAverage = (float) Math.sqrt(velocityAverageX * velocityAverageX + velocityAverageY * velocityAverageY + velocityAverageZ * velocityAverageZ);
-
+                    velocityAverage = (float) Math.sqrt(velocityAverageX * velocityAverageX
+                            + velocityAverageY * velocityAverageY + velocityAverageZ * velocityAverageZ);
 
                     if (isRecording) {
                         realtime.pathRecord(flightState.clone(), batteryChargeRemaining,
@@ -198,6 +198,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                     @Override
                     public void run() {
                         bRun.setText("Upload");
+                        isCovering = false;
                         showToast("Missão interrompida" + (error == null ? " com sucesso" : ", erro: " + error.getDescription()));
                     }
                 });
@@ -211,7 +212,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                         assert executionEvent.getProgress() != null;
                         int i = executionEvent.getProgress().targetWaypointIndex;
 
-                        if (!isCovering && i == 0
+                        if (!isCovering && i == 1
                                 && bRun.getText().equals("Parar")
                                 && executionEvent.getProgress().executeState == WaypointMissionExecuteState.BEGIN_ACTION) {
                             isCovering = true;
@@ -237,7 +238,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                                 );
                             realtime.updateCoveragePaths();
                             showToast("Caminho de cobertura iniciado ");
-                        } else if (isCovering && i == executionEvent.getProgress().totalWaypointCount - 1
+                        } else if (isCovering && i == executionEvent.getProgress().totalWaypointCount - 2
                                 && bRun.getText().equals("Parar")
                                 && executionEvent.getProgress().executeState == WaypointMissionExecuteState.FINISHED_ACTION) {
                             isCovering = false;
@@ -436,9 +437,9 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 startActivity(intent);
             } else
                 showToast("Missão em execução, não pode modificar GSD");
-        } else if (id == R.id.locate) {
-            cameraUpdate(); // Locate the drone's place
-        } else if (id == R.id.add)
+        } else if (id == R.id.locate)
+            cameraUpdate();
+        else if (id == R.id.add)
             addPath();
         else if (id == R.id.config)
             if (bRun.getText().equals("Upload"))
@@ -716,7 +717,6 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void showSettingDialog() {
-        // Definir opção de velocidade com base no valor de mSpeed
         if (mSpeed == 2.0f)
             rgSpeed.check(R.id.lowSpeed);
         else if (mSpeed == 4.0f)
@@ -726,7 +726,6 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         else if (mSpeed == 15.0f)
             rgSpeed.check(R.id.veryHighSpeed);
 
-        // Definir opção de ação após finalizar com base no valor de mFinishedAction
         switch (mFinishedAction) {
             case 0:
                 rgActionAfterFinished.check(R.id.finishNone);
@@ -742,7 +741,6 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 break;
         }
 
-        // Definir opção de algoritmo com base no valor de algorithm
         switch (algorithm) {
             case 0:
                 rgAlgorithm.check(R.id.bcd);
@@ -752,7 +750,6 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 break;
         }
 
-        // Definir opção de tirar foto com base no valor de mission.isTakePhoto()
         rgPhoto.check(mission.isTakePhoto() ? R.id.yes : R.id.no);
         rgRec.check(isRecording ? R.id.yesRecord : R.id.noRecord);
         rgAspectRadio.check(camera.getPhotoAspectRatio() == 0 ? R.id.radio4_3 : R.id.radio16_9);
@@ -807,28 +804,31 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         });
     }
 
-    OnCompleteListenerCallback copy = (Task<DataSnapshot> task) -> {
-        List<LatLng> delete = new ArrayList<>(aoi.getAoiVertex());
-        for (LatLng vertex : delete)
-            aoi.deleteVertex(vertex);
-        for (DataSnapshot snapshot : task.getResult().getChildren()) {
-            double latitude = snapshot.child("latitude").getValue(Double.class);
-            double longitude = snapshot.child("longitude").getValue(Double.class);
-            LatLng vertex = new LatLng(latitude, longitude);
-            aoi.addVertex(vertex);
-            aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
-            createPath();
-            if (!bAdd.getText().equals("Cobertura")) {
-                aoi.setVisibleVertex(false);
-                aoi.setVisibleObb(false);
+    OnCompleteListenerCallback copy = (Task<DataSnapshot> task) -> runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+            List<LatLng> delete = new ArrayList<>(aoi.getAoiVertex());
+            for (LatLng vertex : delete)
+                aoi.deleteVertex(vertex);
+            for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                double latitude = snapshot.child("latitude").getValue(Double.class);
+                double longitude = snapshot.child("longitude").getValue(Double.class);
+                LatLng vertex = new LatLng(latitude, longitude);
+                aoi.addVertex(vertex);
+                aoi.setObb(jtsgu.calculateOrientedBoundingBox(aoi.getAoiVertex()));
+                createPath();
+                if (!bAdd.getText().equals("Cobertura")) {
+                    aoi.setVisibleVertex(false);
+                    aoi.setVisibleObb(false);
+                }
             }
+            showToast("Cobertura clonada com sucesso");
         }
-    };
+    });
 
     private void duplicate() {
-        if (bRun.getText().equals("Upload")) {
+        if (bRun.getText().equals("Upload"))
             realtime.iterateBetweenCoveragePaths(copy);
-        }
     }
 
     private boolean onProductConnectionChange() {

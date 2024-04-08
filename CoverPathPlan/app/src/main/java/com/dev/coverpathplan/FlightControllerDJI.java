@@ -39,9 +39,8 @@ public class FlightControllerDJI {
                 if (isSimulating)
                     mFlightControllerSimulator = mFlightController.getSimulator();
             }
-        } else {
+        } else
             return false;
-        }
 
         if (!isSimulating) {
             if (mFlightController != null) {
@@ -76,12 +75,8 @@ public class FlightControllerDJI {
             onDestroySimulator();
         } else {
             if (mFlightControllerSimulator != null) {
-                mFlightControllerSimulator.start(InitializationData.createInstance(new LocationCoordinate2D(-23.1858535, -50.6574255), 10, 12),
-                        new CommonCallbacks.CompletionCallback<DJIError>() {
-                            @Override
-                            public void onResult(DJIError djiError) {
-                            }
-                        });
+                mFlightControllerSimulator.start(InitializationData.createInstance(
+                        new LocationCoordinate2D(-23.1858535, -50.6574255), 10, 12), null);
                 mFlightControllerSimulator.setStateCallback(new SimulatorState.Callback() {
                     @Override
                     public void onUpdate(@NonNull SimulatorState simulatorState) {

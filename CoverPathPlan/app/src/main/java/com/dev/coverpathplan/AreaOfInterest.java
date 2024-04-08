@@ -185,9 +185,9 @@ public class AreaOfInterest {
     }
 
     boolean setGrid(List<LatLng> points) {
-        for (Marker pointMarker : gridPointsMarker) {
+        for (Marker pointMarker : gridPointsMarker)
             pointMarker.remove();
-        }
+
         gridPoints.clear();
         gridPointsMarker.clear();
         try {
@@ -247,9 +247,8 @@ public class AreaOfInterest {
     }
 
     void setVisibleVertex(boolean visible) {
-        for (Marker vertexMarker : aoiVertexMarker) {
+        for (Marker vertexMarker : aoiVertexMarker)
             vertexMarker.setVisible(visible);
-        }
     }
 
     void setVisibleObb(boolean visible) {
@@ -258,15 +257,13 @@ public class AreaOfInterest {
     }
 
     void setDraggableInitial(boolean visible) {
-        for (Marker pointMarker : initialPointsMarker) {
+        for (Marker pointMarker : initialPointsMarker)
             pointMarker.setDraggable(visible);
-        }
     }
 
     void setDraggableFinal(boolean visible) {
-        for (Marker pointMarker : finalPointsMarker) {
+        for (Marker pointMarker : finalPointsMarker)
             pointMarker.setDraggable(visible);
-        }
     }
 
     boolean addInitialPoint(LatLng point) {
@@ -418,9 +415,9 @@ public class AreaOfInterest {
 
     boolean guideMinimumSpanningTree(List<Node> nodes) {
         try {
-            for (Polyline arcs : minimumSpanningTree) {
+            for (Polyline arcs : minimumSpanningTree)
                 arcs.remove();
-            }
+
             minimumSpanningTree.clear();
 
             for (int i = 0; i < nodes.size() - 1; i += 2) {

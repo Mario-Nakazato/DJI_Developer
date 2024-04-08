@@ -18,7 +18,7 @@ interface OnCompleteListenerCallback {
 }
 
 public class Database {
-    private DatabaseReference databaseReference, record, cover, planning, path, metrics;
+    private DatabaseReference databaseReference, record, cover, planning, metrics;
     private List<String> paths;
     private int nPath = 0;
 
@@ -46,6 +46,7 @@ public class Database {
             return;
 
         planning = cover.child("planning");
+        cover.setValue(hash + "/path");
         metrics = cover.child("metrics");
     }
 
@@ -73,40 +74,41 @@ public class Database {
     }
 
     void pathRecord(FlightState flightState, int chargeRemaining, int chargeRemainingInPercent, int voltage, int current) {
-        String h = cover.child("path").push().getKey();
-        path = cover.child("path").child(h);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String h = cover.child("path").push().getKey();
 
-        if (path == null)
-            return;
-
-        Map<String, Object> dataMap = new HashMap<>();
-        dataMap.put("currentDateTime", flightState.currentDateTime);
-        dataMap.put("areMotorsOn", flightState.areMotorsOn);
-        dataMap.put("isFlying", flightState.isFlying);
-        dataMap.put("latitude", flightState.latitude);
-        dataMap.put("longitude", flightState.longitude);
-        dataMap.put("altitude", flightState.altitude);
-        dataMap.put("positionX", flightState.positionX);
-        dataMap.put("positionY", flightState.positionY);
-        dataMap.put("positionZ", flightState.positionZ);
-        dataMap.put("takeoffLocationAltitude", flightState.takeoffLocationAltitude);
-        dataMap.put("pitch", flightState.pitch);
-        dataMap.put("roll", flightState.roll);
-        dataMap.put("yaw", flightState.yaw);
-        dataMap.put("velocityX", flightState.velocityX);
-        dataMap.put("velocityY", flightState.velocityY);
-        dataMap.put("velocityZ", flightState.velocityZ);
-        dataMap.put("flightTimeInSeconds", flightState.flightTimeInSeconds);
-        dataMap.put("flightMode", flightState.flightMode);
-        dataMap.put("satelliteCount", flightState.satelliteCount);
-        dataMap.put("ultrasonicHeight", flightState.ultrasonicHeight);
-        dataMap.put("flightCount", flightState.flightCount);
-        dataMap.put("aircraftHeadDirection", flightState.aircraftHeadDirection);
-        dataMap.put("chargeRemaining", chargeRemaining);
-        dataMap.put("chargeRemainingInPercent", chargeRemainingInPercent);
-        dataMap.put("voltage", voltage);
-        dataMap.put("current", current);
-        path.updateChildren(dataMap);
+                Map<String, Object> dataMap = new HashMap<>();
+                dataMap.put("currentDateTime", flightState.currentDateTime);
+                dataMap.put("areMotorsOn", flightState.areMotorsOn);
+                dataMap.put("isFlying", flightState.isFlying);
+                dataMap.put("latitude", flightState.latitude);
+                dataMap.put("longitude", flightState.longitude);
+                dataMap.put("altitude", flightState.altitude);
+                dataMap.put("positionX", flightState.positionX);
+                dataMap.put("positionY", flightState.positionY);
+                dataMap.put("positionZ", flightState.positionZ);
+                dataMap.put("takeoffLocationAltitude", flightState.takeoffLocationAltitude);
+                dataMap.put("pitch", flightState.pitch);
+                dataMap.put("roll", flightState.roll);
+                dataMap.put("yaw", flightState.yaw);
+                dataMap.put("velocityX", flightState.velocityX);
+                dataMap.put("velocityY", flightState.velocityY);
+                dataMap.put("velocityZ", flightState.velocityZ);
+                dataMap.put("flightTimeInSeconds", flightState.flightTimeInSeconds);
+                dataMap.put("flightMode", flightState.flightMode);
+                dataMap.put("satelliteCount", flightState.satelliteCount);
+                dataMap.put("ultrasonicHeight", flightState.ultrasonicHeight);
+                dataMap.put("flightCount", flightState.flightCount);
+                dataMap.put("aircraftHeadDirection", flightState.aircraftHeadDirection);
+                dataMap.put("chargeRemaining", chargeRemaining);
+                dataMap.put("chargeRemainingInPercent", chargeRemainingInPercent);
+                dataMap.put("voltage", voltage);
+                dataMap.put("current", current);
+                cover.child("path/" + h).updateChildren(dataMap);
+            }
+        }).start();
     }
 
     void metricsRecord(double pathDistance, double pathDistanceDJI, String estimatedTime, String estimatedTimeDJI,
@@ -142,9 +144,8 @@ public class Database {
                     @Override
                     public void onComplete(@NonNull Task<DataSnapshot> task) {
                         if (task.isSuccessful()) {
-                            for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                            for (DataSnapshot snapshot : task.getResult().getChildren())
                                 paths.add("SimulatorState/" + snapshot.getKey());
-                            }
                         }
                     }
                 });
@@ -154,9 +155,8 @@ public class Database {
                     @Override
                     public void onComplete(@NonNull Task<DataSnapshot> task) {
                         if (task.isSuccessful()) {
-                            for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                            for (DataSnapshot snapshot : task.getResult().getChildren())
                                 paths.add("FlightControllerState/" + snapshot.getKey());
-                            }
                         }
                     }
                 });
@@ -169,9 +169,8 @@ public class Database {
                         .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
                             @Override
                             public void onComplete(@NonNull Task<DataSnapshot> task) {
-                                if (task.isSuccessful()) {
+                                if (task.isSuccessful())
                                     callback.execute(task);
-                                }
                             }
                         });
                 nPath++;

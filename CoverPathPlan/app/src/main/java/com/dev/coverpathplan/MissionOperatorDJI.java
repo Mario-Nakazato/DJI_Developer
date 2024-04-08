@@ -48,8 +48,8 @@ public class MissionOperatorDJI {
     MissionOperatorDJI() {
         pathWaypoint = new ArrayList<>();
         waypointMissionBuilder = new WaypointMission.Builder();
-        actionPhoto = new WaypointAction(WaypointActionType.START_TAKE_PHOTO, 4);
-        actionStay = new WaypointAction(WaypointActionType.STAY, 2);
+        actionPhoto = new WaypointAction(WaypointActionType.START_TAKE_PHOTO, 1); // 0 - 6 seg.
+        actionStay = new WaypointAction(WaypointActionType.STAY, 1000); // 0 - 32767 miliseg.
     }
 
     boolean setMissionOperator(WaypointMissionOperator WaypointMissionOperator, MissionOperatorDJICallback missionOperatorDJICallback) {
@@ -86,31 +86,39 @@ public class MissionOperatorDJI {
     }
 
     void removeListener() {
-        if (missionOperator != null) {
+        if (missionOperator != null)
             missionOperator.removeListener(eventNotificationListener);
-        }
     }
 
     boolean setPathWaypoint(List<LatLng> path, int bearing) {
         if (missionOperator == null || path.isEmpty())
             return false;
 
-        for (Waypoint waypoint : pathWaypoint) {
+        for (Waypoint waypoint : pathWaypoint)
             waypointMissionBuilder.removeWaypoint(waypoint);
-        }
+
         pathWaypoint.clear();
         try {
             actionRotate = new WaypointAction(WaypointActionType.ROTATE_AIRCRAFT, (bearing + 180) % 360 - 180);
             for (LatLng waypoint : path) {
                 Waypoint mWaypoint = new Waypoint(waypoint.latitude, waypoint.longitude, (float) CaptureArea.getAltitude());
-                if (pathWaypoint.isEmpty())
-                    mWaypoint.addAction(actionRotate);
+                if (pathWaypoint.isEmpty()) {
+                    LatLng w = path.get(1);
+                    Waypoint mW = new Waypoint(w.latitude, w.longitude, (float) CaptureArea.getAltitude());
+                    mW.addAction(actionRotate);
+                    pathWaypoint.add(mW);
+                    waypointMissionBuilder.addWaypoint(mW);
+                }
                 mWaypoint.addAction(actionStay);
                 if (takePhoto)
                     mWaypoint.addAction(actionPhoto);
                 pathWaypoint.add(mWaypoint);
                 waypointMissionBuilder.addWaypoint(mWaypoint);
             }
+            LatLng waypoint = path.get(path.size() - 2);
+            Waypoint mWaypoint = new Waypoint(waypoint.latitude, waypoint.longitude, (float) CaptureArea.getAltitude());
+            pathWaypoint.add(mWaypoint);
+            waypointMissionBuilder.addWaypoint(mWaypoint);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -151,18 +159,16 @@ public class MissionOperatorDJI {
     void uploadMission() {
         if (missionOperator != null)
             missionOperator.uploadMission(new CommonCallbacks.CompletionCallback<DJIError>() {
-                DJIError e;
-
                 @Override
                 public void onResult(DJIError error) {
                     if (error != null)
                         missionOperator.retryUploadMission(new CommonCallbacks.CompletionCallback<DJIError>() {
                             @Override
                             public void onResult(DJIError error) {
-                                e = error;
+                                callback.uploadMission(error);
                             }
                         });
-                    callback.uploadMission(e);
+                    callback.uploadMission(error);
                 }
             });
     }
