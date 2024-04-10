@@ -83,23 +83,23 @@ public class Database {
                 dataMap.put("currentDateTime", flightState.currentDateTime);
                 dataMap.put("areMotorsOn", flightState.areMotorsOn);
                 dataMap.put("isFlying", flightState.isFlying);
-                dataMap.put("latitude", flightState.latitude);
-                dataMap.put("longitude", flightState.longitude);
-                dataMap.put("altitude", flightState.altitude);
-                dataMap.put("positionX", flightState.positionX);
-                dataMap.put("positionY", flightState.positionY);
-                dataMap.put("positionZ", flightState.positionZ);
-                dataMap.put("takeoffLocationAltitude", flightState.takeoffLocationAltitude);
-                dataMap.put("pitch", flightState.pitch);
-                dataMap.put("roll", flightState.roll);
-                dataMap.put("yaw", flightState.yaw);
-                dataMap.put("velocityX", flightState.velocityX);
-                dataMap.put("velocityY", flightState.velocityY);
-                dataMap.put("velocityZ", flightState.velocityZ);
+                dataMap.put("latitude", isValidDouble(flightState.latitude) ? flightState.latitude : null);
+                dataMap.put("longitude", isValidDouble(flightState.longitude) ? flightState.longitude : null);
+                dataMap.put("altitude", isValidDouble(flightState.altitude) ? flightState.altitude : null);
+                dataMap.put("positionX", isValidDouble(flightState.positionX) ? flightState.positionX : null);
+                dataMap.put("positionY", isValidDouble(flightState.positionY) ? flightState.positionY : null);
+                dataMap.put("positionZ", isValidDouble(flightState.positionZ) ? flightState.positionZ : null);
+                dataMap.put("takeoffLocationAltitude", isValidDouble(flightState.takeoffLocationAltitude) ? flightState.takeoffLocationAltitude : null);
+                dataMap.put("pitch", isValidDouble(flightState.pitch) ? flightState.pitch : null);
+                dataMap.put("roll", isValidDouble(flightState.roll) ? flightState.roll : null);
+                dataMap.put("yaw", isValidDouble(flightState.yaw) ? flightState.yaw : null);
+                dataMap.put("velocityX", isValidDouble(flightState.velocityX) ? flightState.velocityX : null);
+                dataMap.put("velocityY", isValidDouble(flightState.velocityY) ? flightState.velocityY : null);
+                dataMap.put("velocityZ", isValidDouble(flightState.velocityZ) ? flightState.velocityZ : null);
                 dataMap.put("flightTimeInSeconds", flightState.flightTimeInSeconds);
                 dataMap.put("flightMode", flightState.flightMode);
                 dataMap.put("satelliteCount", flightState.satelliteCount);
-                dataMap.put("ultrasonicHeight", flightState.ultrasonicHeight);
+                dataMap.put("ultrasonicHeight", isValidDouble(flightState.ultrasonicHeight) ? flightState.ultrasonicHeight : null);
                 dataMap.put("flightCount", flightState.flightCount);
                 dataMap.put("aircraftHeadDirection", flightState.aircraftHeadDirection);
                 dataMap.put("chargeRemaining", chargeRemaining);
@@ -109,6 +109,11 @@ public class Database {
                 cover.child("path/" + h).updateChildren(dataMap);
             }
         }).start();
+    }
+
+    // Método auxiliar para verificar se um valor double é válido
+    private boolean isValidDouble(double value) {
+        return !Double.isNaN(value) && !Double.isInfinite(value);
     }
 
     void metricsRecord(double pathDistance, double pathDistanceDJI, String estimatedTime, String estimatedTimeDJI,

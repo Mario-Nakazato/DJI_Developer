@@ -664,9 +664,10 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             return;
 
         pathDistanceDJI = mission.calculateTotalDistance();
-        estimatedTimeDJI = convertingDoubleToHoursMinutesSecondsMilliseconds(mission.calculateTotalTime().longValue());
 
         DJIError error = mission.loadMission(mFinishedAction, mSpeed);
+        estimatedTimeDJI = convertingDoubleToHoursMinutesSecondsMilliseconds(mission.calculateTotalTime().longValue());
+
         if (error == null) {
             mission.uploadMission();
             showToast("Missão carregada com sucesso");
@@ -707,7 +708,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                 bearing -= 90;
 
             pathDistance = calculateTotalDistance(aoi.getPathPoint());
-            estimatedTime = convertingDoubleToHoursMinutesSecondsMilliseconds((long) (4.2 * calculateTotalDistance(aoi.getPathPoint()) / mSpeed));
+            estimatedTime = convertingDoubleToHoursMinutesSecondsMilliseconds((long) (1.9 * calculateTotalDistance(aoi.getPathPoint()) / mSpeed));
             quantityPhoto = aoi.getGridPoints().size();
 
             aoi.setPathPlanning();

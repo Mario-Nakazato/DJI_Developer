@@ -9,7 +9,6 @@ import dji.common.flightcontroller.Attitude;
 import dji.common.flightcontroller.FlightControllerState;
 import dji.common.flightcontroller.LocationCoordinate3D;
 import dji.common.flightcontroller.simulator.InitializationData;
-import dji.common.flightcontroller.simulator.SimulatorState;
 import dji.common.model.LocationCoordinate2D;
 import dji.common.util.CommonCallbacks;
 import dji.sdk.base.BaseProduct;
@@ -42,62 +41,44 @@ public class FlightControllerDJI {
         } else
             return false;
 
-        if (!isSimulating) {
-            if (mFlightController != null) {
-                mFlightController.setStateCallback(new FlightControllerState.Callback() {
-                    @Override
-                    public void onUpdate(@NonNull FlightControllerState djiFlightControllerCurrentState) {
-                        flightState.currentDateTime = timeStamp2Date("dd/MM/yyyy HH:mm:ss.SSS");
-                        flightState.areMotorsOn = djiFlightControllerCurrentState.areMotorsOn();
-                        flightState.isFlying = djiFlightControllerCurrentState.isFlying();
-                        LocationCoordinate3D aircraftLocation = djiFlightControllerCurrentState.getAircraftLocation();
-                        flightState.latitude = aircraftLocation.getLatitude();
-                        flightState.longitude = aircraftLocation.getLongitude();
-                        flightState.altitude = aircraftLocation.getAltitude();
-                        flightState.takeoffLocationAltitude = djiFlightControllerCurrentState.getTakeoffLocationAltitude();
-                        Attitude attitude = djiFlightControllerCurrentState.getAttitude();
-                        flightState.pitch = attitude.pitch;
-                        flightState.roll = attitude.roll;
-                        flightState.yaw = attitude.yaw;
-                        flightState.velocityX = djiFlightControllerCurrentState.getVelocityX();
-                        flightState.velocityY = djiFlightControllerCurrentState.getVelocityY();
-                        flightState.velocityZ = djiFlightControllerCurrentState.getVelocityZ();
-                        flightState.flightTimeInSeconds = djiFlightControllerCurrentState.getFlightTimeInSeconds();
-                        flightState.flightMode = djiFlightControllerCurrentState.getFlightMode().name();
-                        flightState.satelliteCount = djiFlightControllerCurrentState.getSatelliteCount();
-                        flightState.ultrasonicHeight = djiFlightControllerCurrentState.getUltrasonicHeightInMeters();
-                        flightState.flightCount = djiFlightControllerCurrentState.getFlightCount();
-                        flightState.aircraftHeadDirection = String.valueOf(djiFlightControllerCurrentState.getAircraftHeadDirection());
-                        callback.execute(flightState);
-                    }
-                });
-            }
+        if (mFlightController != null) {
+            onDestroyController();
             onDestroySimulator();
-        } else {
-            if (mFlightControllerSimulator != null) {
+            mFlightController.setStateCallback(new FlightControllerState.Callback() {
+                @Override
+                public void onUpdate(@NonNull FlightControllerState djiFlightControllerCurrentState) {
+                    flightState.currentDateTime = timeStamp2Date("dd/MM/yyyy HH:mm:ss.SSS");
+                    flightState.areMotorsOn = djiFlightControllerCurrentState.areMotorsOn();
+                    flightState.isFlying = djiFlightControllerCurrentState.isFlying();
+                    LocationCoordinate3D aircraftLocation = djiFlightControllerCurrentState.getAircraftLocation();
+                    flightState.latitude = aircraftLocation.getLatitude();
+                    flightState.longitude = aircraftLocation.getLongitude();
+                    flightState.altitude = aircraftLocation.getAltitude();
+                    flightState.takeoffLocationAltitude = djiFlightControllerCurrentState.getTakeoffLocationAltitude();
+                    Attitude attitude = djiFlightControllerCurrentState.getAttitude();
+                    flightState.pitch = attitude.pitch;
+                    flightState.roll = attitude.roll;
+                    flightState.yaw = attitude.yaw;
+                    flightState.velocityX = djiFlightControllerCurrentState.getVelocityX();
+                    flightState.velocityY = djiFlightControllerCurrentState.getVelocityY();
+                    flightState.velocityZ = djiFlightControllerCurrentState.getVelocityZ();
+                    flightState.flightTimeInSeconds = djiFlightControllerCurrentState.getFlightTimeInSeconds();
+                    flightState.flightMode = djiFlightControllerCurrentState.getFlightMode().name();
+                    flightState.satelliteCount = djiFlightControllerCurrentState.getSatelliteCount();
+                    flightState.ultrasonicHeight = djiFlightControllerCurrentState.getUltrasonicHeightInMeters();
+                    flightState.flightCount = djiFlightControllerCurrentState.getFlightCount();
+                    flightState.aircraftHeadDirection = String.valueOf(djiFlightControllerCurrentState.getAircraftHeadDirection());
+                    callback.execute(flightState);
+                }
+            });
+        }
+
+        if (isSimulating) {
+            if (mFlightControllerSimulator != null)
                 mFlightControllerSimulator.start(InitializationData.createInstance(
                         new LocationCoordinate2D(-23.1858535, -50.6574255), 10, 12), null);
-                mFlightControllerSimulator.setStateCallback(new SimulatorState.Callback() {
-                    @Override
-                    public void onUpdate(@NonNull SimulatorState simulatorState) {
-                        flightState.currentDateTime = timeStamp2Date("dd/MM/yyyy HH:mm:ss.SSS");
-                        flightState.areMotorsOn = simulatorState.areMotorsOn();
-                        flightState.isFlying = simulatorState.isFlying();
-                        LocationCoordinate2D location = simulatorState.getLocation();
-                        flightState.latitude = location.getLatitude();
-                        flightState.longitude = location.getLongitude();
-                        flightState.positionX = simulatorState.getPositionX();
-                        flightState.positionY = simulatorState.getPositionY();
-                        flightState.positionZ = simulatorState.getPositionZ();
-                        flightState.pitch = simulatorState.getPitch();
-                        flightState.roll = simulatorState.getRoll();
-                        flightState.yaw = simulatorState.getYaw();
-                        callback.execute(flightState);
-                    }
-                });
-            }
-            onDestroyController();
         }
+
         return true;
     }
 
