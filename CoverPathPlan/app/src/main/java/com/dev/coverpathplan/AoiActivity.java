@@ -232,6 +232,7 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                                 realtime.planningRecord(aoi.getAoiVertex(), bearing, mSpeed, mFinishedAction,
                                         algorithm == 0 ? "Boustrophedon Cellular Decomposition" : "Spanning Tree Coverage",
                                         mission.isTakePhoto(), camera.getPhotoAspectRatio() == 0 ? "4:3" : "16:9",
+                                        CaptureArea.getAltitude(),
                                         CaptureArea.getGsdLargura(), CaptureArea.getGsdAltura(),
                                         CaptureArea.getOverlapLargura(), CaptureArea.getOverlapAltura(),
                                         CaptureArea.getFootprintLargura(), CaptureArea.getFootprintAltura()

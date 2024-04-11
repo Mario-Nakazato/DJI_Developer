@@ -18,7 +18,7 @@ interface OnCompleteListenerCallback {
 }
 
 public class Database {
-    private DatabaseReference databaseReference, record, cover, planning, metrics;
+    private DatabaseReference databaseReference, record, cover, planning, path, metrics;
     private List<String> paths;
     private int nPath = 0;
 
@@ -46,12 +46,12 @@ public class Database {
             return;
 
         planning = cover.child("planning");
-        cover.setValue(hash + "/path");
+        path = cover.child("path");
         metrics = cover.child("metrics");
     }
 
     void planningRecord(List<LatLng> vertex, double bearing, float speed, int finishedAction, String algorithm,
-                        boolean isTakePhoto, String aspectRatio, double gsdLargura, double gsdAltura, double overlapLargura,
+                        boolean isTakePhoto, String aspectRatio, double altitude, double gsdLargura, double gsdAltura, double overlapLargura,
                         double overlapAltura, double footprintLargura, double footprintAltura) {
         if (planning == null)
             return;
@@ -64,6 +64,7 @@ public class Database {
         dataMap.put("algorithm", algorithm);
         dataMap.put("isTakePhoto", isTakePhoto);
         dataMap.put("aspectRatio", aspectRatio);
+        dataMap.put("altitude", altitude);
         dataMap.put("gsdLargura", gsdLargura);
         dataMap.put("gsdAltura", gsdAltura);
         dataMap.put("overlapLargura", overlapLargura);
@@ -74,41 +75,36 @@ public class Database {
     }
 
     void pathRecord(FlightState flightState, int chargeRemaining, int chargeRemainingInPercent, int voltage, int current) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String h = cover.child("path").push().getKey();
+        String h = path.push().getKey();
 
-                Map<String, Object> dataMap = new HashMap<>();
-                dataMap.put("currentDateTime", flightState.currentDateTime);
-                dataMap.put("areMotorsOn", flightState.areMotorsOn);
-                dataMap.put("isFlying", flightState.isFlying);
-                dataMap.put("latitude", isValidDouble(flightState.latitude) ? flightState.latitude : null);
-                dataMap.put("longitude", isValidDouble(flightState.longitude) ? flightState.longitude : null);
-                dataMap.put("altitude", isValidDouble(flightState.altitude) ? flightState.altitude : null);
-                dataMap.put("positionX", isValidDouble(flightState.positionX) ? flightState.positionX : null);
-                dataMap.put("positionY", isValidDouble(flightState.positionY) ? flightState.positionY : null);
-                dataMap.put("positionZ", isValidDouble(flightState.positionZ) ? flightState.positionZ : null);
-                dataMap.put("takeoffLocationAltitude", isValidDouble(flightState.takeoffLocationAltitude) ? flightState.takeoffLocationAltitude : null);
-                dataMap.put("pitch", isValidDouble(flightState.pitch) ? flightState.pitch : null);
-                dataMap.put("roll", isValidDouble(flightState.roll) ? flightState.roll : null);
-                dataMap.put("yaw", isValidDouble(flightState.yaw) ? flightState.yaw : null);
-                dataMap.put("velocityX", isValidDouble(flightState.velocityX) ? flightState.velocityX : null);
-                dataMap.put("velocityY", isValidDouble(flightState.velocityY) ? flightState.velocityY : null);
-                dataMap.put("velocityZ", isValidDouble(flightState.velocityZ) ? flightState.velocityZ : null);
-                dataMap.put("flightTimeInSeconds", flightState.flightTimeInSeconds);
-                dataMap.put("flightMode", flightState.flightMode);
-                dataMap.put("satelliteCount", flightState.satelliteCount);
-                dataMap.put("ultrasonicHeight", isValidDouble(flightState.ultrasonicHeight) ? flightState.ultrasonicHeight : null);
-                dataMap.put("flightCount", flightState.flightCount);
-                dataMap.put("aircraftHeadDirection", flightState.aircraftHeadDirection);
-                dataMap.put("chargeRemaining", chargeRemaining);
-                dataMap.put("chargeRemainingInPercent", chargeRemainingInPercent);
-                dataMap.put("voltage", voltage);
-                dataMap.put("current", current);
-                cover.child("path/" + h).updateChildren(dataMap);
-            }
-        }).start();
+        Map<String, Object> dataMap = new HashMap<>();
+        dataMap.put("currentDateTime", flightState.currentDateTime);
+        dataMap.put("areMotorsOn", flightState.areMotorsOn);
+        dataMap.put("isFlying", flightState.isFlying);
+        dataMap.put("latitude", isValidDouble(flightState.latitude) ? flightState.latitude : null);
+        dataMap.put("longitude", isValidDouble(flightState.longitude) ? flightState.longitude : null);
+        dataMap.put("altitude", isValidDouble(flightState.altitude) ? flightState.altitude : null);
+        dataMap.put("positionX", isValidDouble(flightState.positionX) ? flightState.positionX : null);
+        dataMap.put("positionY", isValidDouble(flightState.positionY) ? flightState.positionY : null);
+        dataMap.put("positionZ", isValidDouble(flightState.positionZ) ? flightState.positionZ : null);
+        dataMap.put("takeoffLocationAltitude", isValidDouble(flightState.takeoffLocationAltitude) ? flightState.takeoffLocationAltitude : null);
+        dataMap.put("pitch", isValidDouble(flightState.pitch) ? flightState.pitch : null);
+        dataMap.put("roll", isValidDouble(flightState.roll) ? flightState.roll : null);
+        dataMap.put("yaw", isValidDouble(flightState.yaw) ? flightState.yaw : null);
+        dataMap.put("velocityX", isValidDouble(flightState.velocityX) ? flightState.velocityX : null);
+        dataMap.put("velocityY", isValidDouble(flightState.velocityY) ? flightState.velocityY : null);
+        dataMap.put("velocityZ", isValidDouble(flightState.velocityZ) ? flightState.velocityZ : null);
+        dataMap.put("flightTimeInSeconds", flightState.flightTimeInSeconds);
+        dataMap.put("flightMode", flightState.flightMode);
+        dataMap.put("satelliteCount", flightState.satelliteCount);
+        dataMap.put("ultrasonicHeight", isValidDouble(flightState.ultrasonicHeight) ? flightState.ultrasonicHeight : null);
+        dataMap.put("flightCount", flightState.flightCount);
+        dataMap.put("aircraftHeadDirection", flightState.aircraftHeadDirection);
+        dataMap.put("chargeRemaining", chargeRemaining);
+        dataMap.put("chargeRemainingInPercent", chargeRemainingInPercent);
+        dataMap.put("voltage", voltage);
+        dataMap.put("current", current);
+        path.child(h).updateChildren(dataMap);
     }
 
     // Método auxiliar para verificar se um valor double é válido
