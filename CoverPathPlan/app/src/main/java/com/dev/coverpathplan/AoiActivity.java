@@ -1,6 +1,7 @@
 package com.dev.coverpathplan;
 
 import static com.dev.coverpathplan.FlightState.calculateElapsedTime;
+import static com.dev.coverpathplan.FlightState.convertToSeconds;
 import static com.dev.coverpathplan.FlightState.convertingDoubleToHoursMinutesSecondsMilliseconds;
 import static com.dev.coverpathplan.GeoCalcGeodeticUtils.calculateDistance;
 import static com.dev.coverpathplan.GeoCalcGeodeticUtils.calculateTotalDistance;
@@ -55,10 +56,9 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
     private Button bDelete, bGsd, bLocate, bAdd, bIsSimulating, bConfig, bRun, bStatus, bClone;
     private TextView tPathDistance, tPathDistanceDJI, tEstimatedTime, tEstimatedTimeDJI, tQuantityPhoto,
             tDistanceTraveled, tBearing, tInitialDateTime, tCurrentDateTime, tFinalDateTime, tElapsedTime,
-            tvelocityAverageX, tvelocityAverageY, tvelocityAverageZ, tvelocityAverage, tChargeRemaining,
-            tChargeRemainingInPercent, tCurrent, tVoltage, tChargeConsumption, tChargeConsumptionInPercent,
-            tPathDistanceMetrics, tPathDistanceDJIMetrics, tEstimatedTimeMetrics, tEstimatedTimeDJIMetrics,
-            tQuantityPhotoMetrics, tBearingMetrics;
+            tvelocityAverage, tChargeRemaining, tChargeRemainingInPercent, tCurrent, tVoltage, tChargeConsumption,
+            tChargeConsumptionInPercent, tPathDistanceMetrics, tPathDistanceDJIMetrics, tEstimatedTimeMetrics,
+            tEstimatedTimeDJIMetrics, tQuantityPhotoMetrics, tBearingMetrics;
     private RadioGroup rgSpeed, rgActionAfterFinished, rgAlgorithm, rgPhoto, rgRec, rgAspectRadio, rgOrientation;
     private LinearLayout lSettings, lMetrics, lStatus;
     private AlertDialog adSetting, adMetrics, adStatus;
@@ -67,9 +67,8 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
             batteryChargeRemaining = 0, batteryChargeRemainingInPercent = 0, batteryVoltage = 0, batteryCurrent = 0,
             batteryChargeConsumption = 0, batteryChargeConsumptionInPercent = 0;
     private boolean isSimulating = false, isCovering = false, isRecording = true;
-    private float mSpeed = 2.0f, velocityN = 0, velocityX = 0, velocityY = 0, velocityZ = 0,
-            velocityAverageX = 0, velocityAverageY = 0, velocityAverageZ = 0, velocityAverage = 0;
-    private double bearing = 0, distanceTraveled = 0, pathDistance = 0, pathDistanceDJI = 0;
+    private float mSpeed = 2.0f;
+    private double bearing = 0, distanceTraveled = 0, pathDistance = 0, pathDistanceDJI = 0, velocityAverage = 0;
     private String estimatedTime = "HH:mm:ss.SSS", estimatedTimeDJI = "HH:mm:ss.SSS", initialDateTime = "dd/MM/yyyy HH:mm:ss.SSS",
             currentDateTime = "dd/MM/yyyy HH:mm:ss.SSS", finalDateTime = "dd/MM/yyyy HH:mm:ss.SSS",
             elapsedTime = "HH:mm:ss.SSS";
@@ -139,23 +138,16 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                     elapsedTime = calculateElapsedTime(initialDateTime, finalDateTime);
                     distanceTraveled += calculateDistance(new LatLng(vant.latitude, vant.longitude),
                             new LatLng(flightState.latitude, flightState.longitude));
-                    velocityN++;
-                    velocityX += Math.abs(vant.velocityX);
-                    velocityY += Math.abs(vant.velocityY);
-                    velocityZ += Math.abs(vant.velocityZ);
-                    velocityAverageX = velocityX / velocityN;
-                    velocityAverageY = velocityY / velocityN;
-                    velocityAverageZ = velocityZ / velocityN;
-                    velocityAverage = (float) Math.sqrt(velocityAverageX * velocityAverageX
-                            + velocityAverageY * velocityAverageY + velocityAverageZ * velocityAverageZ);
+                    double time = convertToSeconds(elapsedTime);
+                    if (time != 0)
+                        velocityAverage = distanceTraveled / time;
 
                     if (isRecording) {
                         realtime.pathRecord(flightState.clone(), batteryChargeRemaining,
                                 batteryChargeRemainingInPercent, batteryVoltage, batteryCurrent);
                         realtime.metricsRecord(pathDistance, pathDistanceDJI, estimatedTime, estimatedTimeDJI,
                                 quantityPhoto, initialDateTime, finalDateTime, elapsedTime, distanceTraveled,
-                                velocityAverageX, velocityAverageY, velocityAverageZ, velocityAverage,
-                                batteryChargeConsumption, batteryChargeConsumptionInPercent);
+                                velocityAverage, batteryChargeConsumption, batteryChargeConsumptionInPercent);
                     }
 
                     if (adStatus.isShowing())
@@ -219,10 +211,6 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
 
                             initialDateTime = "dd/MM/yyyy HH:mm:ss.SSS";
                             distanceTraveled = 0;
-                            velocityN = 0;
-                            velocityX = 0;
-                            velocityY = 0;
-                            velocityZ = 0;
                             batteryChargeRemaining = 0;
                             batteryChargeConsumption = 0;
                             batteryChargeRemainingInPercent = 0;
@@ -588,9 +576,6 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         tFinalDateTime = lStatus.findViewById(R.id.finalDateTime);
         tElapsedTime = lStatus.findViewById(R.id.elapsedTime);
         tDistanceTraveled = lStatus.findViewById(R.id.distanceTraveled);
-        tvelocityAverageX = lStatus.findViewById(R.id.velocityAverageX);
-        tvelocityAverageY = lStatus.findViewById(R.id.velocityAverageY);
-        tvelocityAverageZ = lStatus.findViewById(R.id.velocityAverageZ);
         tvelocityAverage = lStatus.findViewById(R.id.velocityAverage);
         tChargeRemaining = lStatus.findViewById(R.id.chargeRemaining);
         tChargeRemainingInPercent = lStatus.findViewById(R.id.chargeRemainingInPercent);
@@ -777,9 +762,6 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         tFinalDateTime.setText("Data e hora final: " + finalDateTime);
         tElapsedTime.setText("Tempo decorrido: " + calculateElapsedTime(initialDateTime, finalDateTime));
         tDistanceTraveled.setText("Distância percorrida: " + decimalFormatter.format(distanceTraveled) + " m");
-        tvelocityAverageX.setText("Velocidade média X: " + decimalFormatter.format(velocityAverageX) + " m/s");
-        tvelocityAverageY.setText("Velocidade média Y: " + decimalFormatter.format(velocityAverageY) + " m/s");
-        tvelocityAverageZ.setText("Velocidade média Z: " + decimalFormatter.format(velocityAverageZ) + " m/s");
         tvelocityAverage.setText("Velocidade média: " + decimalFormatter.format(velocityAverage) + " m/s");
         tChargeRemaining.setText("Energia restante da bateria: " + batteryChargeRemaining + " mAh");
         tChargeRemainingInPercent.setText("Energia restante da bateria: " + batteryChargeRemainingInPercent + " %");

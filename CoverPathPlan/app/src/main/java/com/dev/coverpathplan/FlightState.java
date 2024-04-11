@@ -44,6 +44,31 @@ public class FlightState implements Cloneable {
         return sdf.format(new Date(time));
     }
 
+    public static double convertToSeconds(String timeString) {
+        try {
+            // Dividir a string em horas, minutos, segundos e milissegundos
+            String[] parts = timeString.split(":");
+            int hours = Integer.parseInt(parts[0]);
+            int minutes = Integer.parseInt(parts[1]);
+
+            // Dividir os segundos e os milissegundos
+            String[] secondsAndMillis = parts[2].split("\\.");
+            int seconds = Integer.parseInt(secondsAndMillis[0]);
+            int milliseconds = Integer.parseInt(secondsAndMillis[1]);
+
+            // Calcular o total de segundos
+            double totalSeconds = hours * 3600 + minutes * 60 + seconds;
+
+            // Adicionar os milissegundos convertidos para segundos
+            totalSeconds += (double) milliseconds / 1000;
+
+            return totalSeconds;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1; // ou outra indicação de erro
+        }
+    }
+
     public static String convertingDoubleToHoursMinutesSecondsMilliseconds(long time) {
         time *= 1000;
         return convertingToHoursMinutesSecondsMilliseconds(time);

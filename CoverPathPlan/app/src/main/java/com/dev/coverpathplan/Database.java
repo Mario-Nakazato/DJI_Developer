@@ -114,25 +114,21 @@ public class Database {
 
     void metricsRecord(double pathDistance, double pathDistanceDJI, String estimatedTime, String estimatedTimeDJI,
                        int quantityPhoto, String initialDateTime, String finalDateTime, String elapsedTime, double distanceTraveled,
-                       double velocityAverageX, double velocityAverageY, double velocityAverageZ, double velocityAverage,
-                       int chargeConsumption, int chargeConsumptionInPercent) {
+                       double velocityAverage, int chargeConsumption, int chargeConsumptionInPercent) {
         if (metrics == null)
             return;
 
         Map<String, Object> dataMap = new HashMap<>();
-        dataMap.put("pathDistance", pathDistance);
-        dataMap.put("pathDistanceDJI", pathDistanceDJI);
+        dataMap.put("pathDistance", isValidDouble(pathDistance) ? pathDistance : null);
+        dataMap.put("pathDistanceDJI", isValidDouble(pathDistanceDJI) ? pathDistanceDJI : null);
         dataMap.put("estimatedTime", estimatedTime);
         dataMap.put("estimatedTimeDJI", estimatedTimeDJI);
         dataMap.put("quantityPhoto", quantityPhoto);
         dataMap.put("initialDateTime", initialDateTime);
         dataMap.put("finalDateTime", finalDateTime);
         dataMap.put("elapsedTime", elapsedTime);
-        dataMap.put("distanceTraveled", distanceTraveled);
-        dataMap.put("velocityAverageX", velocityAverageX);
-        dataMap.put("velocityAverageY", velocityAverageY);
-        dataMap.put("velocityAverageZ", velocityAverageZ);
-        dataMap.put("velocityAverage", velocityAverage);
+        dataMap.put("distanceTraveled", isValidDouble(distanceTraveled) ? distanceTraveled : null);
+        dataMap.put("velocityAverage", isValidDouble(velocityAverage) ? velocityAverage : null);
         dataMap.put("chargeConsumption", chargeConsumption);
         dataMap.put("chargeConsumptionInPercent", chargeConsumptionInPercent);
         metrics.updateChildren(dataMap);
