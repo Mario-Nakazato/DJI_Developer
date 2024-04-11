@@ -140,9 +140,9 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                     distanceTraveled += calculateDistance(new LatLng(vant.latitude, vant.longitude),
                             new LatLng(flightState.latitude, flightState.longitude));
                     velocityN++;
-                    velocityX += vant.velocityX;
-                    velocityY += vant.velocityY;
-                    velocityZ += vant.velocityZ;
+                    velocityX += Math.abs(vant.velocityX);
+                    velocityY += Math.abs(vant.velocityY);
+                    velocityZ += Math.abs(vant.velocityZ);
                     velocityAverageX = velocityX / velocityN;
                     velocityAverageY = velocityY / velocityN;
                     velocityAverageZ = velocityZ / velocityN;
