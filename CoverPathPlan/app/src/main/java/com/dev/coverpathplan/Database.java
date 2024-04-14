@@ -3,10 +3,11 @@ package com.dev.coverpathplan;
 import androidx.annotation.NonNull;
 
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 interface OnCompleteListenerCallback {
-    void execute(Task<DataSnapshot> task);
+    void execute(DataSnapshot dataSnapshot);
 }
 
 public class Database {
@@ -136,38 +137,108 @@ public class Database {
 
     void updateCoveragePaths() {
         paths.clear();
-        databaseReference.child("SimulatorState").get()
-                .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+        databaseReference.child("SimulatorState")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onComplete(@NonNull Task<DataSnapshot> task) {
-                        if (task.isSuccessful()) {
-                            for (DataSnapshot snapshot : task.getResult().getChildren())
-                                paths.add("SimulatorState/" + snapshot.getKey());
-                        }
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren())
+                            paths.add("SimulatorState/" + snapshot.getKey());
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
                     }
                 });
 
-        databaseReference.child("FlightControllerState").get()
-                .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+        databaseReference.child("FlightControllerState")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onComplete(@NonNull Task<DataSnapshot> task) {
-                        if (task.isSuccessful()) {
-                            for (DataSnapshot snapshot : task.getResult().getChildren())
-                                paths.add("FlightControllerState/" + snapshot.getKey());
-                        }
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren())
+                            paths.add("FlightControllerState/" + snapshot.getKey());
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
                     }
                 });
+
+        // Configurar um ChildEventListener para manter a lista atualizada
+        databaseReference.child("SimulatorState").addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
+                // Adicionar a nova HashKey à lista
+                String newHashKey = dataSnapshot.getKey();
+                paths.add("SimulatorState/" + newHashKey);
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
+                // Lidar com alterações, se necessário
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                // Remover a HashKey removida da lista
+                String removedHashKey = dataSnapshot.getKey();
+                paths.remove(removedHashKey);
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {
+                // Lidar com movimentações, se necessário
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                // Lidar com erros, se necessário
+            }
+        });
+
+        databaseReference.child("FlightControllerState").addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
+                // Adicionar a nova HashKey à lista
+                String newHashKey = dataSnapshot.getKey();
+                paths.add("FlightControllerState/" + newHashKey);
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
+                // Lidar com alterações, se necessário
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                // Remover a HashKey removida da lista
+                String removedHashKey = dataSnapshot.getKey();
+                paths.remove(removedHashKey);
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {
+                // Lidar com movimentações, se necessário
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                // Lidar com erros, se necessário
+            }
+        });
     }
 
     void iterateBetweenCoveragePaths(OnCompleteListenerCallback callback) {
         if (databaseReference != null) {
             if (!paths.isEmpty()) {
-                databaseReference.child(paths.get(nPath) + "/planning/vertex").get()
-                        .addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+                databaseReference.child(paths.get(nPath) + "/planning/vertex")
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
-                            public void onComplete(@NonNull Task<DataSnapshot> task) {
-                                if (task.isSuccessful())
-                                    callback.execute(task);
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                callback.execute(dataSnapshot);
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
                             }
                         });
                 nPath++;

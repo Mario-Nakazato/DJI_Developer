@@ -225,7 +225,6 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
                                         CaptureArea.getOverlapLargura(), CaptureArea.getOverlapAltura(),
                                         CaptureArea.getFootprintLargura(), CaptureArea.getFootprintAltura()
                                 );
-                            realtime.updateCoveragePaths();
                             showToast("Caminho de cobertura iniciado ");
                         } else if (isCovering && i == executionEvent.getProgress().totalWaypointCount - 2
                                 && bRun.getText().equals("Parar")
@@ -788,13 +787,13 @@ public class AoiActivity extends AppCompatActivity implements OnMapReadyCallback
         });
     }
 
-    OnCompleteListenerCallback copy = (Task<DataSnapshot> task) -> runOnUiThread(new Runnable() {
+    OnCompleteListenerCallback copy = (DataSnapshot dataSnapshot) -> runOnUiThread(new Runnable() {
         @Override
         public void run() {
             List<LatLng> delete = new ArrayList<>(aoi.getAoiVertex());
             for (LatLng vertex : delete)
                 aoi.deleteVertex(vertex);
-            for (DataSnapshot snapshot : task.getResult().getChildren()) {
+            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                 double latitude = snapshot.child("latitude").getValue(Double.class);
                 double longitude = snapshot.child("longitude").getValue(Double.class);
                 LatLng vertex = new LatLng(latitude, longitude);
