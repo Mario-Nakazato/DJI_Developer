@@ -4,6 +4,9 @@ pluginManagement {
         //noinspection JcenterRepositoryObsolete
         jcenter()
         maven { url 'https://jitpack.io' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://repo.huaweicloud.com/repository/maven'}
         mavenCentral()
         gradlePluginPortal()
     }
@@ -15,6 +18,9 @@ dependencyResolutionManagement {
         //noinspection JcenterRepositoryObsolete
         jcenter()
         maven { url 'https://jitpack.io' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://repo.huaweicloud.com/repository/maven'}
         mavenCentral()
     }
 }
